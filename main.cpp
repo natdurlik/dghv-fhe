@@ -1,19 +1,8 @@
 #include <iostream>
 #include <gmpxx.h>
+#include "src/rounded_quot_mod.h"
 
 using namespace std;
-
-mpz_class quot(mpz_class z, mpz_class p) {
-    mpz_class rest = z % p;
-    if (rest != 0 && rest >= p / 2) {
-        return z / p + 1;
-    }
-    return z / p;
-}
-
-mpz_class rem(mpz_class z, mpz_class p) {
-    return z - quot(z, p) * p;
-}
 
 
 int main() {
