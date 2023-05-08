@@ -1,7 +1,6 @@
 #include <iostream>
 #include <gmpxx.h>
 #include "src/SomewhatScheme.h"
-#include "src2/Boo.h"
 
 using namespace std;
 
@@ -27,9 +26,7 @@ int main() {
 //    }
 //    cout<<endl;
 
-//    SomewhatScheme scheme(4,time(nullptr));
-//    Boo b(1,2);
-    SomewhatScheme scheme(1,2);
+    SomewhatScheme scheme(1,time(nullptr));
 
     mpz_class m=true;
     cout<<m<<endl;

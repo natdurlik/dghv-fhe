@@ -9,3 +9,4 @@ add_executable(Google_Tests_run rounded_quot_mod_test.cpp)
 
 target_link_libraries(Google_Tests_run gtest gtest_main)
 target_link_libraries(Google_Tests_run gmp gmpxx)
+target_link_libraries(Google_Tests_run src)

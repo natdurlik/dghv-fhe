@@ -1,6 +1,6 @@
 project(src)
 
-file(GLOB SOURCES *.cpp *.h)
+set(HEADER_FILES rounded_quot_mod.h SomewhatScheme.h)
+set(SOURCE_FILES rounded_quot_mod.cpp SomewhatScheme.cpp)
 
-add_library(src STATIC ${SOURCES})
-target_include_directories(src PUBLIC .)
+add_library(src STATIC ${SOURCE_FILES} ${HEADER_FILES})
