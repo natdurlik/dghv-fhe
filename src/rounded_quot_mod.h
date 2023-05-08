@@ -15,4 +15,8 @@ mpz_class rem(mpz_class z, mpz_class p) {
     return z - quot(z, p) * p;
 }
 
+bool is_even(mpz_class x) {
+    return rem(x, 2) == 0;
+}
+
 #endif //DGHV_FHE_ROUNDED_QUOT_MOD_H
