@@ -6,7 +6,7 @@ class QuotTest : public ::testing::TestWithParam<std::tuple<std::string, std::st
 };
 
 TEST_P(QuotTest, BasicCases) {
-    const auto& param = GetParam();
+    const auto &param = GetParam();
     mpz_class a(std::get<0>(param));
     mpz_class b(std::get<1>(param));
     mpz_class res = quot(a, b);
@@ -15,18 +15,28 @@ TEST_P(QuotTest, BasicCases) {
 }
 
 INSTANTIATE_TEST_SUITE_P(SmallInts, QuotTest, ::testing::Values(
-                std::tuple{"7","2",4},
-                std::tuple{"3","6",1},
-                std::tuple{"10","1",10},
-                std::tuple{"1","10",0},
-                std::tuple{"1","2",1}
-            ));
+        std::tuple{"7", "2", 4},
+        std::tuple{"3", "6", 1},
+        std::tuple{"10", "1", 10},
+        std::tuple{"1", "10", 0},
+        std::tuple{"1", "2", 1},
+        std::tuple{"-1", "2", 0},
+        std::tuple{"1", "-2", 0},
+        std::tuple{"-1", "-2", 1},
+        std::tuple{"-10", "2", -5},
+        std::tuple{"10", "-2", -5},
+        std::tuple{"-20", "3", -7},
+        std::tuple{"20", "3", 7},
+        std::tuple{"-20", "-3", 7},
+        std::tuple{"11", "2", 6},
+        std::tuple{"-11", "2", -5}
+));
 
 class RemTest : public ::testing::TestWithParam<std::tuple<std::string, std::string, int>> {
 };
 
 TEST_P(RemTest, BasicCases) {
-    const auto& param = GetParam();
+    const auto &param = GetParam();
     mpz_class a(std::get<0>(param));
     mpz_class b(std::get<1>(param));
     mpz_class res = rem(a, b);
@@ -35,9 +45,21 @@ TEST_P(RemTest, BasicCases) {
 }
 
 INSTANTIATE_TEST_SUITE_P(SmallInts, RemTest, ::testing::Values(
-                std::tuple{"7","2",-1},
-                std::tuple{"3","6",-3},
-                std::tuple{"10","1",0},
-                std::tuple{"1","10",1},
-                std::tuple{"1","2",-1}
-            ));
+        std::tuple{"7", "2", -1},
+        std::tuple{"3", "6", -3},
+        std::tuple{"10", "1", 0},
+        std::tuple{"1", "10", 1},
+        std::tuple{"1", "2", -1},
+        std::tuple{"-1", "2", -1},
+        std::tuple{"1", "-2", 1},
+        std::tuple{"-1", "-2", 1},
+        std::tuple{"-10", "2", 0},
+        std::tuple{"-10", "-2", 0},
+        std::tuple{"10", "-2", 0},
+        std::tuple{"-20", "3", 1},
+        std::tuple{"20", "3", -1},
+        std::tuple{"-20", "-3", 1},
+        std::tuple{"20", "-3", -1},
+        std::tuple{"11", "2", -1},
+        std::tuple{"-11", "2", -1}
+));
