@@ -10,11 +10,10 @@ include_directories(src)
 add_subdirectory(test)
 add_subdirectory(src)
 
-find_package(GMP REQUIRED)
-
-#set(SOURCES src2/Boo.cpp src/SomewhatScheme.cpp)
+#find_package(GMP REQUIRED)
+#find_package(NTL REQUIRED)
 
 add_executable(dghv_fhe main.cpp ${SOURCE_FILES})
+target_link_libraries(dghv_fhe ntl)
 target_link_libraries(dghv_fhe gmp gmpxx)
 target_link_libraries(dghv_fhe src)
-#target_link_libraries(dghv_fhe SchemeLib)

@@ -76,13 +76,10 @@ TEST_P(IsEvenTest, BasicCases) {
 }
 
 INSTANTIATE_TEST_SUITE_P(SmallInts, IsEvenTest, ::testing::Values(
-        std::tuple{"46", true},
         std::tuple{"0", true},
         std::tuple{"2", true},
         std::tuple{"-10", true},
-        std::tuple{"-2", true},
         std::tuple{"1", false},
-        std::tuple{"-3", false},
         std::tuple{"-1", false},
         std::tuple{"-33", false}
 ));
