@@ -1,5 +1,4 @@
 #include <gtest/gtest.h>
-#include <gmpxx.h>
 #include "rounded_quot_mod.h"
 
 class QuotTest : public ::testing::TestWithParam<std::tuple<std::string, std::string, int>> {
@@ -63,3 +62,29 @@ INSTANTIATE_TEST_SUITE_P(SmallInts, RemTest, ::testing::Values(
         std::tuple{"11", "2", -1},
         std::tuple{"-11", "2", -1}
 ));
+
+
+class IsEvenTest : public ::testing::TestWithParam<std::tuple<std::string, bool>> {
+};
+
+TEST_P(IsEvenTest, BasicCases) {
+    const auto &param = GetParam();
+    mpz_class x(std::get<0>(param));
+    bool res = is_even(x);
+
+    EXPECT_EQ(res, std::get<1>(param));
+}
+
+INSTANTIATE_TEST_SUITE_P(SmallInts, IsEvenTest, ::testing::Values(
+        std::tuple{"46", true},
+        std::tuple{"0", true},
+        std::tuple{"2", true},
+        std::tuple{"-10", true},
+        std::tuple{"-2", true},
+        std::tuple{"1", false},
+        std::tuple{"-3", false},
+        std::tuple{"-1", false},
+        std::tuple{"-33", false}
+));
+
+
