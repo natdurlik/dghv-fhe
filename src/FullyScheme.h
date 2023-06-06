@@ -13,6 +13,8 @@ public:
 
     FullyScheme(int security, long rd_seed);
 
+    FullyScheme(int security, int Theta, long rd_seed);
+
     std::pair<std::vector<NTL::GF2>, PublicKey> key_gen();
 
     mpz_class encrypt(const std::vector<mpz_class> &pk, NTL::GF2 message);

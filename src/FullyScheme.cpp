@@ -7,6 +7,13 @@ FullyScheme::FullyScheme(int security, long rd_seed) : SomewhatScheme(security, 
     n = std::ceil(log2(theta)) + 3;
 }
 
+FullyScheme::FullyScheme(int security, int Theta, long rd_seed) : SomewhatScheme(security, rd_seed) {
+    theta = lambda;
+    kappa = gamma * eta / ro_prim;
+    this->Theta = Theta;
+    n = std::ceil(log2(theta)) + 3;
+}
+
 std::pair<std::vector<NTL::GF2>, PublicKey> FullyScheme::key_gen() {
     return {};
 }
