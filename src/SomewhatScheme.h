@@ -31,7 +31,7 @@ public:
 
     mpz_class sample_secret_key();
 
-    int log2(int x);
+    double log2(int x);
 };
 
 

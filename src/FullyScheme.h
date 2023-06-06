@@ -9,12 +9,9 @@ public:
     int theta;
     int Theta;
     int kappa;
+    int n;
 
-    FullyScheme(int security, long rd_seed) : SomewhatScheme(security, rd_seed) {
-        theta = lambda;
-        kappa = gamma * eta / ro_prim;
-        Theta = kappa;
-    }
+    FullyScheme(int security, long rd_seed);
 
     std::pair<std::vector<NTL::GF2>, PublicKey> key_gen();
 
@@ -25,10 +22,34 @@ public:
     NTL::GF2 decrypt(mpz_class sk, mpz_class c);
 
     template<typename T>
-    T recrypt(std::vector<T> c, std::vector<T> s, std::vector<std::vector<T>> z);
+    T recrypt(std::vector<T> c, std::vector<T> s, std::vector<std::vector<T>> z) {
+        return c.back();
+    }
 
     template<typename T>
-    std::vector<T> hamming_weight(std::vector<T> a);
+    std::vector<T> hamming_weight(const std::vector<T> &a) {
+        std::vector<T> W(n + 1, T{});
+        int pol_size = std::ceil(std::pow(2, n));
+        std::vector<std::vector<T>> dp(pol_size + 1, std::vector<T>(a.size() + 1, T{}));
+
+        for (int k = 0; k <= a.size(); k++) {
+            dp[0][k] = T{1};
+        }
+
+        for (int k = 1; k <= a.size(); k++) {
+            for (int j = 1; j <= pol_size; j++) {
+                dp[j][k] = a[k - 1] * dp[j - 1][k - 1] + dp[j][k - 1];
+            }
+        }
+
+        int pow2 = 1;
+        for (int i = 0; i <= n; i++) {
+            W[i] = dp[pow2][a.size()];
+            pow2 *= 2;
+        }
+
+        return W;
+    }
 
 };
 

@@ -105,7 +105,7 @@ std::vector<mpz_class> SomewhatScheme::sample_public_key(mpz_class p) {
     return x;
 }
 
-int SomewhatScheme::log2(int x) {
+double SomewhatScheme::log2(int x) {
     return std::log(x) / std::log(2);
 }
 

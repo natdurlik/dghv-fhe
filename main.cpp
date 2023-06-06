@@ -1,7 +1,7 @@
 #include <iostream>
 #include <gmpxx.h>
 #include "src/SomewhatScheme.h"
-#include "FullyScheme.h"
+#include "src/FullyScheme.h"
 #include <NTL/GF2.h>
 
 using namespace std;
@@ -45,20 +45,39 @@ int main() {
 //    cout << "decrypted " << dec_m << endl;
 //    cout << "should be " << add_circuit(m1, m2) << endl;
 
-    cout<<" fully "<<endl;
+//    cout<<" fully "<<endl;
+//    FullyScheme fhe(8, time(nullptr));
+//
+//    mpz_class pow2;
+//    mpz_ui_pow_ui(pow2.get_mpz_t(), 2, 100);
+//
+//    mpq_class q1(2,4);
+//    mpq_class q3(2,pow2);
+//    cout<<q1<<endl;
+//    cout<<q3<<endl;
+//    cout<<q1*q3<<endl;
+//    cout<<q1<<endl;
+//    q1.canonicalize();
+//    cout<<q1<<endl;
+//    cout<<q3.get_d()<<endl;
+//
+//    FullyScheme fhe(3,time(nullptr));
     FullyScheme fhe(8, time(nullptr));
+    cout << "n=" << fhe.n << endl;
+    cout << "Theta=" << fhe.Theta << endl;
+//    cout << fhe.kappa << endl;
+    vector<NTL::GF2> v{NTL::GF2{1}, NTL::GF2{0}, NTL::GF2{1}, NTL::GF2{1}, NTL::GF2{1}, NTL::GF2{1}, NTL::GF2{1},
+                       NTL::GF2{0}};
+    vector<NTL::GF2> weight = fhe.hamming_weight<>(v);
+//    auto p = fhe.key_gen();
+    for (auto x: weight) {
+        cout << x << " ";
+    }
+    cout << endl;
 
-    mpz_class pow2;
-    mpz_ui_pow_ui(pow2.get_mpz_t(), 2, 100);
-
-    mpq_class q1(2,4);
-    mpq_class q3(2,pow2);
-    cout<<q1<<endl;
-    cout<<q3<<endl;
-    cout<<q1*q3<<endl;
-    cout<<q1<<endl;
-    q1.canonicalize();
-    cout<<q1<<endl;
-    cout<<q3.get_d()<<endl;
+    NTL::GF2 a1(1);
+    NTL::GF2 a2(1);
+    cout << a1 * a2 << endl;
+    cout << int{1} << endl;
     return 0;
 }
