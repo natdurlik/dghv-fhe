@@ -23,6 +23,13 @@ public:
 
     NTL::GF2 decrypt(mpz_class sk, mpz_class c);
 
+    void set_theta_bits_to_one(std::vector<NTL::GF2> &s);
+
+    void fill_with_random_integers_with_condition(std::vector<mpz_class> &u, const std::vector<NTL::GF2> &s,
+                                                  mpz_class range, mpz_class sum_to);
+
+    std::vector<mpz_class> encrypt_secret_key_bits(const std::vector<NTL::GF2> &s, const std::vector<mpz_class> &pk);
+
     template<typename T>
     T recrypt(std::vector<T> c, std::vector<T> s, std::vector<std::vector<T>> z) {
         return c.back();

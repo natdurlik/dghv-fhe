@@ -98,7 +98,7 @@ std::vector<mpz_class> SomewhatScheme::sample_public_key(mpz_class p) {
             x[i] = p * q + r;
         }
 
-        long max_idx = distance(x.begin(), std::max_element(x.begin(), x.end()));
+        unsigned long max_idx = distance(x.begin(), std::max_element(x.begin(), x.end()));
         swap(x[0], x[max_idx]);
     }
 
