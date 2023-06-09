@@ -84,4 +84,12 @@ INSTANTIATE_TEST_SUITE_P(SmallInts, IsEvenTest, ::testing::Values(
         std::tuple{"-33", false}
 ));
 
+TEST(PowOfTwo, SimpleCheck) {
+    mpz_class x = pow_of_two(2);
+    EXPECT_EQ(x, 4);
+    x = pow_of_two(3);
+    EXPECT_EQ(x, 8);
+    x = pow_of_two(10);
+    EXPECT_EQ(x, 1024);
+}
 

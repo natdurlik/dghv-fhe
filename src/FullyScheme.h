@@ -19,7 +19,7 @@ public:
 
     mpz_class encrypt(const std::vector<mpz_class> &pk, NTL::GF2 message);
 
-    std::vector<std::vector<NTL::GF2>> post_process(mpz_class c);
+    std::vector<std::vector<NTL::GF2>> post_process(const std::vector<mpz_class> &c, const std::vector<mpf_class> &y);
 
     NTL::GF2 decrypt(mpz_class sk, mpz_class c);
 
@@ -28,7 +28,8 @@ public:
     void fill_with_random_integers_with_condition(std::vector<mpz_class> &u, const std::vector<NTL::GF2> &s,
                                                   mpz_class range, mpz_class sum_to);
 
-    std::vector<mpz_class> encrypt_secret_key_bits(const std::vector<NTL::GF2> &s, const std::vector<mpz_class> &pk);
+    std::vector<mpz_class>
+    encrypt_secret_key_bits(const std::vector<NTL::GF2> &s, mpz_class p, const std::vector<mpz_class> &pk);
 
     template<typename T>
     T recrypt(std::vector<T> c, std::vector<T> s, std::vector<std::vector<T>> z) {

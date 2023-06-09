@@ -32,13 +32,23 @@ int main() {
 //    cout << a1 * a2 << endl;
 //    cout << int{1} << endl;
 
-    mpz_class x = 10;
+    mpz_class x = 10000;
     mpz_class pow;
     mpz_ui_pow_ui(pow.get_mpz_t(), 2, 10);
 
     mpf_class f(x, 5);
     f /= pow;
     cout << f << endl;
+//    cout << (f % 2) << endl;
+    mp_exp_t exp;
+    cout << f.get_str(exp, 10, 10) << endl;
+    cout << exp << endl;
+    cout << f.get_str(exp, 2, 50) << endl;
+    cout << exp << endl;
+//    cout << "q" << endl;
+//    mpq_class q = mpq_class(x, pow);
+//    cout << q << endl;
+//    cout << q.get_str(2) << endl;
 
     return 0;
 }

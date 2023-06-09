@@ -50,9 +50,25 @@ FullyScheme::fill_with_random_integers_with_condition(std::vector<mpz_class> &u,
 }
 
 std::vector<mpz_class>
-FullyScheme::encrypt_secret_key_bits(const std::vector<NTL::GF2> &s, const std::vector<mpz_class> &pk) {
+FullyScheme::encrypt_secret_key_bits(const std::vector<NTL::GF2> &s, mpz_class p, const std::vector<mpz_class> &pk) {
     std::vector<mpz_class> encrypted_s(s.size());
 
+    // fixme ?
+    mpz_class q_range = pow_of_two(gamma);
+    q_range /= p;
+
+    mpz_class r_range = pow_of_two(ro);
+
+    for (int i = 0; i < encrypted_s.size(); i++) {
+        mpz_class m = 0;
+        if (s[i] == NTL::GF2{1}) {
+            m = 1;
+        }
+
+        mpz_class x = draw_from_distribution(q_range, r_range, p);
+        mpz_class c = m + 2 * x;
+        encrypted_s[i] = rem(c, pk[0]);;
+    }
 
     return encrypted_s;
 }
@@ -65,14 +81,12 @@ std::pair<std::vector<NTL::GF2>, PublicKey> FullyScheme::key_gen() {
     std::vector<NTL::GF2> s(Theta, NTL::GF2{0});
     set_theta_bits_to_one(s);
 
-    mpz_class two_to_kappa;
-    mpz_ui_pow_ui(two_to_kappa.get_mpz_t(), 2, kappa);
+    mpz_class two_to_kappa = pow_of_two(kappa);
     mpz_class xp = two_to_kappa / sk; //fixme round
 
-    mpz_class ui_range;
-    mpz_ui_pow_ui(ui_range.get_mpz_t(), 2, kappa + 1);
-    std::vector<mpz_class> u(Theta);
+    mpz_class ui_range = pow_of_two(kappa + 1);
 
+    std::vector<mpz_class> u(Theta);
     fill_with_random_integers_with_condition(u, s, ui_range, xp);
 
     // generate yi
@@ -82,12 +96,9 @@ std::pair<std::vector<NTL::GF2>, PublicKey> FullyScheme::key_gen() {
         y[i] /= two_to_kappa;
     }
 
-    std::vector<mpz_class> encrypted_sk = encrypt_secret_key_bits(s, pk);
+    std::vector<mpz_class> encrypted_sk = encrypt_secret_key_bits(s, sk, pk);
 
-    PublicKey public_key{};
-    public_key.pk = pk;
-    public_key.y = y;
-    public_key.e_sk = encrypted_sk;
+    PublicKey public_key{pk, y, encrypted_sk};
 
     return {s, public_key};
 }
@@ -96,7 +107,9 @@ mpz_class FullyScheme::encrypt(const std::vector<mpz_class> &pk, NTL::GF2 messag
     return SomewhatScheme::encrypt(pk, message);
 }
 
-std::vector<std::vector<NTL::GF2>> FullyScheme::post_process(mpz_class c) {
+std::vector<std::vector<NTL::GF2>>
+FullyScheme::post_process(const std::vector<mpz_class> &c, const std::vector<mpf_class> &y) {
+
     return {};
 }
 

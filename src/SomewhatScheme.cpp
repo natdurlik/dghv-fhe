@@ -38,8 +38,7 @@ mpz_class SomewhatScheme::encrypt(const std::vector<mpz_class> &pk, NTL::GF2 mes
         }
     }
 
-    mpz_class r_range;
-    mpz_ui_pow_ui(r_range.get_mpz_t(), 2, ro_prim);
+    mpz_class r_range = pow_of_two(ro_prim);
     mpz_class r = rand.get_z_range(r_range - 1);
     mpz_class neg = rand.get_z_bits(1);
     if (neg == 1) {
@@ -63,8 +62,7 @@ NTL::GF2 SomewhatScheme::decrypt(mpz_class sk, mpz_class c) {
 }
 
 mpz_class SomewhatScheme::sample_secret_key() {
-    mpz_class a = 0;
-    mpz_ui_pow_ui(a.get_mpz_t(), 2, eta - 1); // 2^{eta-1}
+    mpz_class a = pow_of_two(eta - 1); // 2^{eta-1}
     mpz_class b = rand.get_z_bits(eta - 1);
     while (is_even(b)) {
         b = rand.get_z_bits(eta - 1);
@@ -76,26 +74,17 @@ mpz_class SomewhatScheme::sample_secret_key() {
 
 
 std::vector<mpz_class> SomewhatScheme::sample_public_key(mpz_class p) {
-    mpz_class q_range;
-    mpz_ui_pow_ui(q_range.get_mpz_t(), 2, gamma);
+    mpz_class q_range = pow_of_two(gamma);
     q_range /= p;
 
-    mpz_class r_range;
-    mpz_ui_pow_ui(r_range.get_mpz_t(), 2, ro);
+    mpz_class r_range = pow_of_two(ro);
 
     std::vector<mpz_class> x(tau + 1);
     x[0] = 2;
 
     while (is_even(x[0]) || !is_even(rem(x[0], p))) {
         for (int i = 0; i < tau + 1; i++) {
-            mpz_class q = rand.get_z_range(q_range - 1);
-            mpz_class r = rand.get_z_range(r_range - 1);
-            mpz_class neg = rand.get_z_bits(1);
-            if (neg == 0) {
-                r = -r;
-            }
-
-            x[i] = p * q + r;
+            x[i] = draw_from_distribution(q_range, r_range, p);
         }
 
         unsigned long max_idx = distance(x.begin(), std::max_element(x.begin(), x.end()));
@@ -103,6 +92,16 @@ std::vector<mpz_class> SomewhatScheme::sample_public_key(mpz_class p) {
     }
 
     return x;
+}
+
+mpz_class SomewhatScheme::draw_from_distribution(mpz_class q_range, mpz_class r_range, mpz_class p) {
+    mpz_class q = rand.get_z_range(q_range - 1);
+    mpz_class r = rand.get_z_range(r_range - 1);
+    mpz_class neg = rand.get_z_bits(1);
+    if (neg == 0) {
+        r = -r;
+    }
+    return p * q + r;;
 }
 
 double SomewhatScheme::log2(int x) {
