@@ -80,7 +80,7 @@ TEST(HammingWeightBinary, SmallNumbers) {
     }
 }
 
-TEST(SetBitsToOne, SimpleCheck) {
+TEST(SetthetaBitsToOne, SimpleCheck) {
     FullyScheme fhe = FullyScheme(8, 0);
     std::vector<NTL::GF2> s(fhe.Theta, NTL::GF2{0});
     fhe.set_theta_bits_to_one(s);
@@ -101,18 +101,17 @@ TEST(FillWithSumToValue, SimpleCheck) {
     s[1] = s[10] = s[32] = s[45] = s[98] = NTL::GF2{1};
 
     unsigned long kappa = 100;
-    mpz_class sum_to;
-    mpz_ui_pow_ui(sum_to.get_mpz_t(), 2, kappa);
+    mpz_class sum_to = pow_of_two(kappa);
+    sum_to /= 23;
 
-    mpz_class range;
-    mpz_ui_pow_ui(range.get_mpz_t(), 2, kappa + 1);
+    mpz_class range = pow_of_two(kappa + 1);
 
     std::vector<mpz_class> u(Theta);
     fhe.fill_with_random_integers_with_condition(u, s, range, sum_to);
 
     mpz_class sum = 0;
     for (int i = 0; i < u.size(); i++) {
-        if (s[i] == NTL::GF2{1}) {
+        if (IsOne(s[i])) {
             sum += u[i];
         }
     }
@@ -121,4 +120,51 @@ TEST(FillWithSumToValue, SimpleCheck) {
     EXPECT_EQ(sum, sum_to);
 }
 
+TEST(KeyGen, PublicKeyHoldsProperEncryptionOfSecretKey) {
+    FullyScheme fhe = FullyScheme(8, 0);
+    SecretKey secret_key;
+    PublicKey public_key;
+    std::tie(secret_key, public_key) = fhe.key_gen();
 
+    for (int i = 0; i < secret_key.s.size(); i++) {
+        NTL::GF2 m = fhe.decrypt(secret_key.p, public_key.e_sk[i]);
+        EXPECT_EQ(m, secret_key.s[i]);
+    }
+}
+
+TEST(KeyGen, PublicKeyYsInCorrectRange) {
+    FullyScheme fhe = FullyScheme(8, 0);
+    SecretKey secret_key;
+    PublicKey public_key;
+    std::tie(secret_key, public_key) = fhe.key_gen();
+
+    EXPECT_EQ(public_key.y.size(), fhe.Theta);
+    for (const auto &y: public_key.y) {
+        EXPECT_TRUE(y < 2);
+        EXPECT_TRUE(y >= 0);
+        EXPECT_TRUE(y.get_prec() >= fhe.kappa);
+    }
+}
+
+
+TEST(KeyGen, PublicKeySumsToOneOverP) {
+    FullyScheme fhe = FullyScheme(9, 0);
+    SecretKey secret_key;
+    PublicKey public_key;
+    std::tie(secret_key, public_key) = fhe.key_gen();
+
+    mpf_class sum(0, fhe.kappa + 2);
+    mpf_class x(1, fhe.kappa + 2);
+    x /= secret_key.p;
+    for (int i = 0; i < public_key.y.size(); i++) {
+        if (IsOne(secret_key.s[i])) {
+            sum += public_key.y[i];
+            sum = mod2f(sum);
+        }
+    }
+
+    mpf_class err(1, fhe.kappa);
+    err /= pow_of_two(fhe.kappa);
+
+    EXPECT_TRUE(abs(x - sum) < err);
+}

@@ -3,6 +3,7 @@
 
 #include "SomewhatScheme.h"
 #include "PublicKey.h"
+#include "SecretKey.h"
 
 class FullyScheme : private SomewhatScheme {
 public:
@@ -15,7 +16,7 @@ public:
 
     FullyScheme(int security, int Theta, long rd_seed);
 
-    std::pair<std::vector<NTL::GF2>, PublicKey> key_gen();
+    std::pair<SecretKey, PublicKey> key_gen();
 
     mpz_class encrypt(const std::vector<mpz_class> &pk, NTL::GF2 message);
 
@@ -33,6 +34,7 @@ public:
 
     template<typename T>
     T recrypt(std::vector<T> c, std::vector<T> s, std::vector<std::vector<T>> z) {
+        // todo
         return c.back();
     }
 

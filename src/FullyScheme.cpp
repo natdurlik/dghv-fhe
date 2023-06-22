@@ -2,8 +2,10 @@
 
 FullyScheme::FullyScheme(int security, long rd_seed) : SomewhatScheme(security, rd_seed) {
     theta = lambda;
-    kappa = gamma * eta / ro_prim;
-    Theta = 20; // fixme
+//    kappa = gamma * eta / ro_prim;
+    kappa = gamma + 2;
+    Theta = 1000; // fixme
+//    Theta = 20;
     n = std::ceil(log2(theta)) + 3;
 }
 
@@ -33,7 +35,7 @@ FullyScheme::fill_with_random_integers_with_condition(std::vector<mpz_class> &u,
     unsigned long last_idx = 0;
     for (unsigned long i = 0; i < u.size(); i++) {
         u[i] = rand.get_z_range(range);
-        if (s[i] == NTL::GF2{1}) {
+        if (IsOne(s[i])) {
             sum += u[i];
             last_idx = i;
         }
@@ -61,19 +63,19 @@ FullyScheme::encrypt_secret_key_bits(const std::vector<NTL::GF2> &s, mpz_class p
 
     for (int i = 0; i < encrypted_s.size(); i++) {
         mpz_class m = 0;
-        if (s[i] == NTL::GF2{1}) {
+        if (IsOne(s[i])) {
             m = 1;
         }
 
         mpz_class x = draw_from_distribution(q_range, r_range, p);
         mpz_class c = m + 2 * x;
-        encrypted_s[i] = rem(c, pk[0]);;
+        encrypted_s[i] = rem(c, pk[0]);
     }
 
     return encrypted_s;
 }
 
-std::pair<std::vector<NTL::GF2>, PublicKey> FullyScheme::key_gen() {
+std::pair<SecretKey, PublicKey> FullyScheme::key_gen() {
     mpz_class sk;
     std::vector<mpz_class> pk;
     tie(sk, pk) = SomewhatScheme::key_gen();
@@ -82,25 +84,27 @@ std::pair<std::vector<NTL::GF2>, PublicKey> FullyScheme::key_gen() {
     set_theta_bits_to_one(s);
 
     mpz_class two_to_kappa = pow_of_two(kappa);
-    mpz_class xp = two_to_kappa / sk; //fixme round
+    mpz_class xp = quot(two_to_kappa, sk);
+    mpf_class f_two_to_kappa(two_to_kappa, kappa + 2);
+    mpf_class xpf(xp, kappa + 2);
 
     mpz_class ui_range = pow_of_two(kappa + 1);
 
     std::vector<mpz_class> u(Theta);
     fill_with_random_integers_with_condition(u, s, ui_range, xp);
 
-    // generate yi
     std::vector<mpf_class> y(Theta);
     for (int i = 0; i < y.size(); i++) {
-        y[i] = mpf_class(u[i], kappa + 1);
+        y[i] = mpf_class(u[i], kappa + 2);
         y[i] /= two_to_kappa;
     }
 
     std::vector<mpz_class> encrypted_sk = encrypt_secret_key_bits(s, sk, pk);
 
+    SecretKey secret_key{sk, s};
     PublicKey public_key{pk, y, encrypted_sk};
 
-    return {s, public_key};
+    return {secret_key, public_key};
 }
 
 mpz_class FullyScheme::encrypt(const std::vector<mpz_class> &pk, NTL::GF2 message) {

@@ -39,3 +39,12 @@ mpz_class pow_of_two(unsigned long exp) {
     mpz_ui_pow_ui(x.get_mpz_t(), 2, exp);
     return x;
 }
+
+mpf_class mod2f(mpf_class x) {
+    mpz_class integral(x);
+    x -= integral;
+    if (integral % 2 == 1) {
+        x += 1;
+    }
+    return x;
+}

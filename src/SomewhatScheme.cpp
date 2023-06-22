@@ -101,7 +101,7 @@ mpz_class SomewhatScheme::draw_from_distribution(mpz_class q_range, mpz_class r_
     if (neg == 0) {
         r = -r;
     }
-    return p * q + r;;
+    return p * q + r;
 }
 
 double SomewhatScheme::log2(int x) {
