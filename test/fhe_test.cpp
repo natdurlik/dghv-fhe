@@ -80,6 +80,51 @@ TEST(HammingWeightBinary, SmallNumbers) {
     }
 }
 
+TEST(HammingWeightCiphertext, SmallNumbers) {
+    long seed = time(nullptr);
+    std::cerr << "with seed = " << seed << std::endl;
+    FullyScheme fhe = FullyScheme(11, seed);
+    SecretKey secret_key;
+    PublicKey public_key;
+    std::tie(secret_key, public_key) = fhe.key_gen();
+
+    // 1
+    std::vector<mpz_class> a = {fhe.encrypt(public_key.pk, NTL::GF2{1})};
+    auto out = fhe.hamming_weight(a);
+    EXPECT_EQ(fhe.decrypt(secret_key.p, out[0]), NTL::GF2{1});
+    for (int i = 1; i < out.size(); i++) {
+        EXPECT_EQ(fhe.decrypt(secret_key.p, out[i]), NTL::GF2{0});
+    }
+
+    // 0
+    a = {fhe.encrypt(public_key.pk, NTL::GF2{0}),
+         fhe.encrypt(public_key.pk, NTL::GF2{0}), fhe.encrypt(public_key.pk, NTL::GF2{0})};
+    out = fhe.hamming_weight(a);
+    for (const auto &i: out) {
+        EXPECT_EQ(fhe.decrypt(secret_key.p, i), NTL::GF2{0});
+    }
+
+    // 1
+    a = {fhe.encrypt(public_key.pk, NTL::GF2{1}), fhe.encrypt(public_key.pk, NTL::GF2{0}),
+         fhe.encrypt(public_key.pk, NTL::GF2{0}), fhe.encrypt(public_key.pk, NTL::GF2{0}),
+         fhe.encrypt(public_key.pk, NTL::GF2{0}), fhe.encrypt(public_key.pk, NTL::GF2{0})};
+    out = fhe.hamming_weight(a);
+    EXPECT_EQ(fhe.decrypt(secret_key.p, out[0]), NTL::GF2{1});
+    for (int i = 1; i < out.size(); i++) {
+        EXPECT_EQ(fhe.decrypt(secret_key.p, out[i]), NTL::GF2{0});
+    }
+
+    // 3
+    a = {fhe.encrypt(public_key.pk, NTL::GF2{1}), fhe.encrypt(public_key.pk, NTL::GF2{1}),
+         fhe.encrypt(public_key.pk, NTL::GF2{0}), fhe.encrypt(public_key.pk, NTL::GF2{1})};
+    out = fhe.hamming_weight(a);
+    EXPECT_EQ(fhe.decrypt(secret_key.p, out[0]), NTL::GF2{1});
+    EXPECT_EQ(fhe.decrypt(secret_key.p, out[1]), NTL::GF2{1});
+    for (int i = 2; i < out.size(); i++) {
+        EXPECT_EQ(fhe.decrypt(secret_key.p, out[i]), NTL::GF2{0});
+    }
+}
+
 TEST(SetthetaBitsToOne, SimpleCheck) {
     FullyScheme fhe = FullyScheme(8, 0);
     std::vector<NTL::GF2> s(fhe.Theta, NTL::GF2{0});

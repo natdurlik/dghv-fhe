@@ -41,21 +41,21 @@ public:
     template<typename T>
     std::vector<T> hamming_weight(const std::vector<T> &a) {
         std::vector<T> W(n + 1, T{});
-        int pol_size = std::ceil(std::pow(2, n));
+        unsigned pol_size = std::ceil(std::pow(2, n));
         std::vector<std::vector<T>> dp(pol_size + 1, std::vector<T>(a.size() + 1, T{}));
 
-        for (int k = 0; k <= a.size(); k++) {
+        for (unsigned k = 0; k <= a.size(); k++) {
             dp[0][k] = T{1};
         }
 
-        for (int k = 1; k <= a.size(); k++) {
-            for (int j = 1; j <= pol_size; j++) {
+        for (unsigned k = 1; k <= a.size(); k++) {
+            for (unsigned j = 1; j <= pol_size; j++) {
                 dp[j][k] = a[k - 1] * dp[j - 1][k - 1] + dp[j][k - 1];
             }
         }
 
-        int pow2 = 1;
-        for (int i = 0; i <= n; i++) {
+        unsigned pow2 = 1;
+        for (unsigned i = 0; i <= n; i++) {
             W[i] = dp[pow2][a.size()];
             pow2 *= 2;
         }
