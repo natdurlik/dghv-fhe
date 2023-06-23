@@ -111,15 +111,59 @@ mpz_class FullyScheme::encrypt(const std::vector<mpz_class> &pk, NTL::GF2 messag
     return SomewhatScheme::encrypt(pk, message);
 }
 
-std::vector<std::vector<NTL::GF2>>
-FullyScheme::post_process(const std::vector<mpz_class> &c, const std::vector<mpf_class> &y) {
+std::pair<std::vector<NTL::GF2>, std::vector<std::vector<NTL::GF2>>>
+FullyScheme::post_process(mpz_class c, const std::vector<mpf_class> &y) {
+    std::vector<mpf_class> zf(y.size());
 
-    return {};
+    for (int i = 0; i < zf.size(); i++) {
+        zf[i] = mod2f(y[i] * c);
+    }
+
+    // z to bits
+    std::vector<std::vector<NTL::GF2>> z(zf.size());
+    for (int i = 0; i < z.size(); i++) {
+        z[i] = mpf_to_bits(zf[i]);
+    }
+
+    auto c_bits = mpz_to_bits(c);
+
+    return {c_bits, z};
 }
 
 NTL::GF2 FullyScheme::decrypt(mpz_class sk, mpz_class c) {
     return SomewhatScheme::decrypt(sk, c);
 }
+
+std::vector<NTL::GF2> FullyScheme::mpf_to_bits(mpf_class f) {
+    mp_exp_t exp;
+    std::string bits_str = f.get_str(exp, 2, n);
+    if (-exp + 1 < 0) {
+        throw std::logic_error("expected decimal smaller than 2");
+    }
+    unsigned start = -exp + 1;
+
+    std::vector<NTL::GF2> bits_gf2(n + 1, NTL::GF2{0}); // n+1 because n bits_gf2 of precision AFTER binary point
+    for (auto gf2_idx = start, str_idx = 0u;
+         gf2_idx < bits_gf2.size() && str_idx < bits_str.size(); gf2_idx++, str_idx++) {
+        if (bits_str[str_idx] == '1') {
+            bits_gf2[gf2_idx] = NTL::GF2{1};
+        }
+    }
+    return bits_gf2;
+}
+
+std::vector<NTL::GF2> FullyScheme::mpz_to_bits(mpz_class x) {
+    std::string bits_str = x.get_str(2);
+    std::vector<NTL::GF2> bits(bits_str.size(), NTL::GF2{0});
+    for (int i = 0; i < bits_str.size(); i++) {
+        if (bits_str[i] == '1') {
+            bits[i] = NTL::GF2{1};
+        }
+    }
+
+    return bits;
+}
+
 
 //template std::vector<int> FullyScheme::hamming_weight<int>(std::vector<int> a);
 

@@ -126,7 +126,7 @@ TEST(HammingWeightCiphertext, SmallNumbers) {
 }
 
 TEST(SetthetaBitsToOne, SimpleCheck) {
-    FullyScheme fhe = FullyScheme(8, 0);
+    FullyScheme fhe(8, 0);
     std::vector<NTL::GF2> s(fhe.Theta, NTL::GF2{0});
     fhe.set_theta_bits_to_one(s);
     unsigned long weight = 0;
@@ -139,7 +139,7 @@ TEST(SetthetaBitsToOne, SimpleCheck) {
 }
 
 TEST(FillWithSumToValue, SimpleCheck) {
-    FullyScheme fhe = FullyScheme(8, 0);
+    FullyScheme fhe(8, 0);
 
     int Theta = 100;
     std::vector<NTL::GF2> s(Theta, NTL::GF2{0});
@@ -166,7 +166,7 @@ TEST(FillWithSumToValue, SimpleCheck) {
 }
 
 TEST(KeyGen, PublicKeyHoldsProperEncryptionOfSecretKey) {
-    FullyScheme fhe = FullyScheme(8, 0);
+    FullyScheme fhe(8, 0);
     SecretKey secret_key;
     PublicKey public_key;
     std::tie(secret_key, public_key) = fhe.key_gen();
@@ -193,7 +193,7 @@ TEST(KeyGen, PublicKeyYsInCorrectRange) {
 
 
 TEST(KeyGen, PublicKeySumsToOneOverP) {
-    FullyScheme fhe = FullyScheme(9, 0);
+    FullyScheme fhe(9, 0);
     SecretKey secret_key;
     PublicKey public_key;
     std::tie(secret_key, public_key) = fhe.key_gen();
@@ -212,4 +212,70 @@ TEST(KeyGen, PublicKeySumsToOneOverP) {
     err /= pow_of_two(fhe.kappa);
 
     EXPECT_TRUE(abs(x - sum) < err);
+}
+
+void to_bits_check_aux(const std::vector<NTL::GF2> &bits, const std::vector<NTL::GF2> &ans) {
+    for (int i = 0; i < ans.size(); i++) {
+        EXPECT_EQ(bits[i], ans[i]);
+    }
+    for (int i = ans.size(); i < bits.size(); i++) {
+        EXPECT_EQ(bits[i], NTL::GF2{0});
+    }
+}
+
+TEST(MpfToBits, SimpleChecks) {
+    FullyScheme fhe(8, 0);
+
+    mpf_class f(0.5, fhe.n);
+    auto bits = fhe.mpf_to_bits(f);
+
+    EXPECT_EQ(bits.size(), fhe.n + 1);
+    std::vector<NTL::GF2> ans{NTL::GF2{0}, NTL::GF2{1}};
+    to_bits_check_aux(bits, ans);
+
+    f = 0.125;
+    bits = fhe.mpf_to_bits(f);
+    ans = {NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{1}};
+    EXPECT_EQ(bits.size(), fhe.n + 1);
+    to_bits_check_aux(bits, ans);
+
+    f = 1.03125;
+    bits = fhe.mpf_to_bits(f);
+    ans = {NTL::GF2{1}, NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{1}};
+    EXPECT_EQ(bits.size(), fhe.n + 1);
+    to_bits_check_aux(bits, ans);
+}
+
+TEST(MpfToBits, ThrowsWhenGreaterOrEqualTwo) {
+    FullyScheme fhe(8, 0);
+    mpf_class f(2.125, fhe.n);
+    EXPECT_THROW(fhe.mpf_to_bits(f), std::logic_error);
+
+    f = 1.125;
+    EXPECT_NO_THROW(fhe.mpf_to_bits(f));
+
+    f = 2;
+    EXPECT_THROW(fhe.mpf_to_bits(f), std::logic_error);
+}
+
+TEST(MpzToBits, SimpleChecks) {
+    FullyScheme fhe(8, 0);
+
+    mpz_class x = 1;
+    auto bits = fhe.mpz_to_bits(x);
+    std::vector<NTL::GF2> ans{NTL::GF2{1}};
+    EXPECT_EQ(bits.size(), ans.size());
+    to_bits_check_aux(bits, ans);
+
+    x = 14;
+    bits = fhe.mpz_to_bits(x);
+    ans = {NTL::GF2{1}, NTL::GF2{1}, NTL::GF2{1}, NTL::GF2{0}};
+    EXPECT_EQ(bits.size(), ans.size());
+    to_bits_check_aux(bits, ans);
+
+    x = 0;
+    bits = fhe.mpz_to_bits(x);
+    ans = {NTL::GF2{0}};
+    EXPECT_EQ(bits.size(), ans.size());
+    to_bits_check_aux(bits, ans);
 }

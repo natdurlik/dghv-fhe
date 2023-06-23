@@ -5,7 +5,7 @@
 #include "PublicKey.h"
 #include "SecretKey.h"
 
-class FullyScheme : private SomewhatScheme {
+class FullyScheme : public SomewhatScheme {
 public:
     int theta;
     int Theta;
@@ -20,7 +20,8 @@ public:
 
     mpz_class encrypt(const std::vector<mpz_class> &pk, NTL::GF2 message);
 
-    std::vector<std::vector<NTL::GF2>> post_process(const std::vector<mpz_class> &c, const std::vector<mpf_class> &y);
+    std::pair<std::vector<NTL::GF2>, std::vector<std::vector<NTL::GF2>>>
+    post_process(mpz_class c, const std::vector<mpf_class> &y);
 
     NTL::GF2 decrypt(mpz_class sk, mpz_class c);
 
@@ -35,6 +36,7 @@ public:
     template<typename T>
     T recrypt(std::vector<T> c, std::vector<T> s, std::vector<std::vector<T>> z) {
         // todo
+
         return c.back();
     }
 
@@ -44,18 +46,18 @@ public:
         unsigned pol_size = std::ceil(std::pow(2, n));
         std::vector<std::vector<T>> dp(pol_size + 1, std::vector<T>(a.size() + 1, T{}));
 
-        for (unsigned k = 0; k <= a.size(); k++) {
+        for (int k = 0; k <= a.size(); k++) {
             dp[0][k] = T{1};
         }
 
-        for (unsigned k = 1; k <= a.size(); k++) {
-            for (unsigned j = 1; j <= pol_size; j++) {
+        for (int k = 1; k <= a.size(); k++) {
+            for (int j = 1; j <= pol_size; j++) {
                 dp[j][k] = a[k - 1] * dp[j - 1][k - 1] + dp[j][k - 1];
             }
         }
 
         unsigned pow2 = 1;
-        for (unsigned i = 0; i <= n; i++) {
+        for (int i = 0; i <= n; i++) {
             W[i] = dp[pow2][a.size()];
             pow2 *= 2;
         }
@@ -63,6 +65,9 @@ public:
         return W;
     }
 
+    std::vector<NTL::GF2> mpf_to_bits(mpf_class f);
+
+    std::vector<NTL::GF2> mpz_to_bits(mpz_class x);
 };
 
 
