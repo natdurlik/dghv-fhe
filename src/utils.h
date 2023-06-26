@@ -1,5 +1,5 @@
-#ifndef DGHV_FHE_ROUNDED_QUOT_MOD_H
-#define DGHV_FHE_ROUNDED_QUOT_MOD_H
+#ifndef DGHV_FHE_UTILS_H
+#define DGHV_FHE_UTILS_H
 
 #include <gmpxx.h>
 
@@ -13,4 +13,4 @@ mpz_class pow_of_two(unsigned long exp);
 
 mpf_class mod2f(mpf_class x);
 
-#endif //DGHV_FHE_ROUNDED_QUOT_MOD_H
+#endif //DGHV_FHE_UTILS_H

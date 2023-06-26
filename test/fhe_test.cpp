@@ -82,6 +82,7 @@ TEST(HammingWeightBinary, SmallNumbers) {
 
 TEST(HammingWeightCiphertext, SmallNumbers) {
     long seed = time(nullptr);
+    // 1687810596 fast seed
     std::cerr << "with seed = " << seed << std::endl;
     FullyScheme fhe = FullyScheme(11, seed);
     SecretKey secret_key;

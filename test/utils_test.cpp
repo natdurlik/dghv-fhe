@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "rounded_quot_mod.h"
+#include "utils.h"
 
 class QuotTest : public ::testing::TestWithParam<std::tuple<std::string, std::string, int>> {
 };

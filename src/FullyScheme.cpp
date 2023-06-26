@@ -142,7 +142,7 @@ std::vector<NTL::GF2> FullyScheme::mpf_to_bits(mpf_class f) {
     }
     unsigned start = -exp + 1;
 
-    std::vector<NTL::GF2> bits_gf2(n + 1, NTL::GF2{0}); // n+1 because n bits_gf2 of precision AFTER binary point
+    std::vector<NTL::GF2> bits_gf2(n + 1, NTL::GF2{0}); // n+1 because n bits of precision AFTER binary point
     for (auto gf2_idx = start, str_idx = 0u;
          gf2_idx < bits_gf2.size() && str_idx < bits_str.size(); gf2_idx++, str_idx++) {
         if (bits_str[str_idx] == '1') {
