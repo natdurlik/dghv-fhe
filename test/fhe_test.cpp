@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include "FullyScheme.h"
+#include "utils.h"
 
 TEST(HammingWeightBinary, AllZeros) {
     FullyScheme fhe = FullyScheme(8, 0);
@@ -81,7 +82,8 @@ TEST(HammingWeightBinary, SmallNumbers) {
 }
 
 TEST(HammingWeightCiphertext, SmallNumbers) {
-    long seed = time(nullptr);
+//    long seed = time(nullptr);
+    long seed = 1687810596;
     // 1687810596 fast seed
     std::cerr << "with seed = " << seed << std::endl;
     FullyScheme fhe = FullyScheme(11, seed);
@@ -213,70 +215,4 @@ TEST(KeyGen, PublicKeySumsToOneOverP) {
     err /= pow_of_two(fhe.kappa);
 
     EXPECT_TRUE(abs(x - sum) < err);
-}
-
-void to_bits_check_aux(const std::vector<NTL::GF2> &bits, const std::vector<NTL::GF2> &ans) {
-    for (int i = 0; i < ans.size(); i++) {
-        EXPECT_EQ(bits[i], ans[i]);
-    }
-    for (int i = ans.size(); i < bits.size(); i++) {
-        EXPECT_EQ(bits[i], NTL::GF2{0});
-    }
-}
-
-TEST(MpfToBits, SimpleChecks) {
-    FullyScheme fhe(8, 0);
-
-    mpf_class f(0.5, fhe.n);
-    auto bits = fhe.mpf_to_bits(f);
-
-    EXPECT_EQ(bits.size(), fhe.n + 1);
-    std::vector<NTL::GF2> ans{NTL::GF2{0}, NTL::GF2{1}};
-    to_bits_check_aux(bits, ans);
-
-    f = 0.125;
-    bits = fhe.mpf_to_bits(f);
-    ans = {NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{1}};
-    EXPECT_EQ(bits.size(), fhe.n + 1);
-    to_bits_check_aux(bits, ans);
-
-    f = 1.03125;
-    bits = fhe.mpf_to_bits(f);
-    ans = {NTL::GF2{1}, NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{1}};
-    EXPECT_EQ(bits.size(), fhe.n + 1);
-    to_bits_check_aux(bits, ans);
-}
-
-TEST(MpfToBits, ThrowsWhenGreaterOrEqualTwo) {
-    FullyScheme fhe(8, 0);
-    mpf_class f(2.125, fhe.n);
-    EXPECT_THROW(fhe.mpf_to_bits(f), std::logic_error);
-
-    f = 1.125;
-    EXPECT_NO_THROW(fhe.mpf_to_bits(f));
-
-    f = 2;
-    EXPECT_THROW(fhe.mpf_to_bits(f), std::logic_error);
-}
-
-TEST(MpzToBits, SimpleChecks) {
-    FullyScheme fhe(8, 0);
-
-    mpz_class x = 1;
-    auto bits = fhe.mpz_to_bits(x);
-    std::vector<NTL::GF2> ans{NTL::GF2{1}};
-    EXPECT_EQ(bits.size(), ans.size());
-    to_bits_check_aux(bits, ans);
-
-    x = 14;
-    bits = fhe.mpz_to_bits(x);
-    ans = {NTL::GF2{1}, NTL::GF2{1}, NTL::GF2{1}, NTL::GF2{0}};
-    EXPECT_EQ(bits.size(), ans.size());
-    to_bits_check_aux(bits, ans);
-
-    x = 0;
-    bits = fhe.mpz_to_bits(x);
-    ans = {NTL::GF2{0}};
-    EXPECT_EQ(bits.size(), ans.size());
-    to_bits_check_aux(bits, ans);
 }

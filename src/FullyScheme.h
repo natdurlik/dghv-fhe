@@ -117,9 +117,6 @@ public:
         return W;
     }
 
-    std::vector<NTL::GF2> mpf_to_bits(mpf_class f);
-
-    std::vector<NTL::GF2> mpz_to_bits(mpz_class x);
 };
 
 

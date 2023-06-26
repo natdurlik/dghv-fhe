@@ -1,4 +1,5 @@
 #include "FullyScheme.h"
+#include "utils.h"
 
 FullyScheme::FullyScheme(int security, long rd_seed) : SomewhatScheme(security, rd_seed) {
     theta = lambda;
@@ -122,7 +123,7 @@ FullyScheme::post_process(mpz_class c, const std::vector<mpf_class> &y) {
     // z to bits
     std::vector<std::vector<NTL::GF2>> z(zf.size());
     for (int i = 0; i < z.size(); i++) {
-        z[i] = mpf_to_bits(zf[i]);
+        z[i] = mpf_to_bits(zf[i], n);
     }
 
     auto c_bits = mpz_to_bits(c);
@@ -132,36 +133,6 @@ FullyScheme::post_process(mpz_class c, const std::vector<mpf_class> &y) {
 
 NTL::GF2 FullyScheme::decrypt(mpz_class sk, mpz_class c) {
     return SomewhatScheme::decrypt(sk, c);
-}
-
-std::vector<NTL::GF2> FullyScheme::mpf_to_bits(mpf_class f) {
-    mp_exp_t exp;
-    std::string bits_str = f.get_str(exp, 2, n);
-    if (-exp + 1 < 0) {
-        throw std::logic_error("expected decimal smaller than 2");
-    }
-    unsigned start = -exp + 1;
-
-    std::vector<NTL::GF2> bits_gf2(n + 1, NTL::GF2{0}); // n+1 because n bits of precision AFTER binary point
-    for (auto gf2_idx = start, str_idx = 0u;
-         gf2_idx < bits_gf2.size() && str_idx < bits_str.size(); gf2_idx++, str_idx++) {
-        if (bits_str[str_idx] == '1') {
-            bits_gf2[gf2_idx] = NTL::GF2{1};
-        }
-    }
-    return bits_gf2;
-}
-
-std::vector<NTL::GF2> FullyScheme::mpz_to_bits(mpz_class x) {
-    std::string bits_str = x.get_str(2);
-    std::vector<NTL::GF2> bits(bits_str.size(), NTL::GF2{0});
-    for (int i = 0; i < bits_str.size(); i++) {
-        if (bits_str[i] == '1') {
-            bits[i] = NTL::GF2{1};
-        }
-    }
-
-    return bits;
 }
 
 

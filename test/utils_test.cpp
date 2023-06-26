@@ -99,3 +99,68 @@ TEST(Mod2f, SimpleChecks) {
     EXPECT_TRUE(abs(mod2f(x) - res) < err);
 }
 
+
+void to_bits_check_aux(const std::vector<NTL::GF2> &bits, const std::vector<NTL::GF2> &ans) {
+    for (int i = 0; i < ans.size(); i++) {
+        EXPECT_EQ(bits[i], ans[i]);
+    }
+    for (int i = ans.size(); i < bits.size(); i++) {
+        EXPECT_EQ(bits[i], NTL::GF2{0});
+    }
+}
+
+TEST(MpfToBits, SimpleChecks) {
+    int n = 8;
+
+    mpf_class f(0.5, n);
+    auto bits = mpf_to_bits(f, n);
+
+    EXPECT_EQ(bits.size(), n + 1);
+    std::vector<NTL::GF2> ans{NTL::GF2{0}, NTL::GF2{1}};
+    to_bits_check_aux(bits, ans);
+
+    f = 0.125;
+    bits = mpf_to_bits(f, n);
+    ans = {NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{1}};
+    EXPECT_EQ(bits.size(), n + 1);
+    to_bits_check_aux(bits, ans);
+
+    f = 1.03125;
+    bits = mpf_to_bits(f, n);
+    ans = {NTL::GF2{1}, NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{1}};
+    EXPECT_EQ(bits.size(), n + 1);
+    to_bits_check_aux(bits, ans);
+}
+
+TEST(MpfToBits, ThrowsWhenGreaterOrEqualTwo) {
+    int n = 8;
+    mpf_class f(2.125, n);
+    EXPECT_THROW(mpf_to_bits(f, n), std::logic_error);
+
+    f = 1.125;
+    EXPECT_NO_THROW(mpf_to_bits(f, n));
+
+    f = 2;
+    EXPECT_THROW(mpf_to_bits(f, n), std::logic_error);
+}
+
+TEST(MpzToBits, SimpleChecks) {
+    mpz_class x = 1;
+    auto bits = mpz_to_bits(x);
+    std::vector<NTL::GF2> ans{NTL::GF2{1}};
+    EXPECT_EQ(bits.size(), ans.size());
+    to_bits_check_aux(bits, ans);
+
+    x = 14;
+    bits = mpz_to_bits(x);
+    ans = {NTL::GF2{1}, NTL::GF2{1}, NTL::GF2{1}, NTL::GF2{0}};
+    EXPECT_EQ(bits.size(), ans.size());
+    to_bits_check_aux(bits, ans);
+
+    x = 0;
+    bits = mpz_to_bits(x);
+    ans = {NTL::GF2{0}};
+    EXPECT_EQ(bits.size(), ans.size());
+    to_bits_check_aux(bits, ans);
+}
+
