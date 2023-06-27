@@ -18,4 +18,8 @@ std::vector<NTL::GF2> mpf_to_bits(mpf_class f, int n);
 
 std::vector<NTL::GF2> mpz_to_bits(mpz_class x);
 
+mpf_class bits_to_mpf(const std::vector<NTL::GF2> &bits, int prec);
+
+mpz_class round_to_closest(mpf_class x);
+
 #endif //DGHV_FHE_UTILS_H

@@ -1,4 +1,3 @@
-#include "FullyScheme.h"
 #include "utils.h"
 
 mpz_class quot(mpz_class z, mpz_class p) {
@@ -44,21 +43,26 @@ mpz_class pow_of_two(unsigned long exp) {
 mpf_class mod2f(mpf_class x) {
     mpz_class integral(x);
     x -= integral;
-    if (integral % 2 == 1) {
-        x += 1;
+    if (x < 0) {
+        integral = -integral;
+        x = -x;
+        x += integral % 2;
+        return 2 - x;
     }
+
+    x += integral % 2;
     return x;
 }
 
 std::vector<NTL::GF2> mpf_to_bits(mpf_class f, int n) {
     mp_exp_t exp;
-    std::string bits_str = f.get_str(exp, 2, n);
+    std::string bits_str = f.get_str(exp, 2);
     if (-exp + 1 < 0) {
-        throw std::logic_error("expected decimal smaller than 2");
+        throw std::logic_error("expected rational smaller than 2");
     }
     unsigned start = -exp + 1;
 
-    std::vector<NTL::GF2> bits_gf2(n + 1, NTL::GF2{0}); // n+1 because n bits of precision AFTER binary point
+    std::vector<NTL::GF2> bits_gf2(n, NTL::GF2{0});
     for (auto gf2_idx = start, str_idx = 0u;
          gf2_idx < bits_gf2.size() && str_idx < bits_str.size(); gf2_idx++, str_idx++) {
         if (bits_str[str_idx] == '1') {
@@ -78,4 +82,45 @@ std::vector<NTL::GF2> mpz_to_bits(mpz_class x) {
     }
 
     return bits;
+}
+
+mpf_class bits_to_mpf(const std::vector<NTL::GF2> &bits, int prec) {
+    // expected rational in [0,2)
+    if (bits.empty()) return 0;
+
+    std::string bits_str;
+    bool f = true;
+
+    for (auto &gf2: bits) {
+        if (IsOne(gf2)) {
+            bits_str.push_back('1');
+        } else {
+            bits_str.push_back('0');
+        }
+
+        if (f) {
+            bits_str.push_back('.');
+            f = false;
+        }
+    }
+
+    mpf_class ret(bits_str, prec, 2);
+    return ret;
+}
+
+mpz_class round_to_closest(mpf_class x) { // only for tests, probably wrong in corner cases
+    mpz_class integral(x);
+    x-=integral;
+    if(x<0) {
+        x=-x;
+        if(x>=0.5) {
+            return integral-1;
+        }
+        return integral;
+    }
+
+    if(x>=0.5) {
+        return integral+1;
+    }
+    return integral;
 }

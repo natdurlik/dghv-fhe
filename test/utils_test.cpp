@@ -99,6 +99,30 @@ TEST(Mod2f, SimpleChecks) {
     EXPECT_TRUE(abs(mod2f(x) - res) < err);
 }
 
+TEST(Mod2f, NegativeValues) {
+    int prec = 100;
+    mpf_class err(0.00001, prec); // fixme?
+
+    mpf_class x(-1.123, prec);
+    mpf_class res(2, prec);
+    res += x;
+    EXPECT_TRUE(abs(mod2f(x) - res) < err);
+
+    x = -0.123;
+    res = 2;
+    res += x;
+    EXPECT_TRUE(abs(mod2f(x) - res) < err);
+
+    x = -120.123;
+    res = 1.877;
+    EXPECT_TRUE(abs(mod2f(x) - res) < err);
+
+    x = -121111.5;
+    res = 0.5;
+    EXPECT_TRUE(abs(mod2f(x) - res) < err);
+
+}
+
 
 void to_bits_check_aux(const std::vector<NTL::GF2> &bits, const std::vector<NTL::GF2> &ans) {
     for (int i = 0; i < ans.size(); i++) {
@@ -144,6 +168,12 @@ TEST(MpfToBits, ThrowsWhenGreaterOrEqualTwo) {
     EXPECT_THROW(mpf_to_bits(f, n), std::logic_error);
 }
 
+//TEST(MpfToBits, CornerCase) {
+//    mpf_class x("1.99999", 6, 10);
+//    mp_exp_t exp;
+//    std::string bits_str = x.get_str(exp, 2, 6 + 6);
+//}
+
 TEST(MpzToBits, SimpleChecks) {
     mpz_class x = 1;
     auto bits = mpz_to_bits(x);
@@ -162,5 +192,24 @@ TEST(MpzToBits, SimpleChecks) {
     ans = {NTL::GF2{0}};
     EXPECT_EQ(bits.size(), ans.size());
     to_bits_check_aux(bits, ans);
+}
+
+TEST(BitsToMpf, SimpleChecks) {
+    std::vector<NTL::GF2> bits{NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{1}};
+    int prec = 100;
+    mpf_class x = bits_to_mpf(bits, prec);
+    mpf_class res("0.125", prec, 10);
+    mpf_class err(0.000000001, prec);
+    EXPECT_TRUE(abs(x - res) < err);
+
+    bits = {NTL::GF2{1}, NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{1}};
+    x = bits_to_mpf(bits, prec);
+    res = 1.125;
+    EXPECT_TRUE(abs(x - res) < err);
+
+    bits = {NTL::GF2{1}, NTL::GF2{0}, NTL::GF2{1}, NTL::GF2{1}, NTL::GF2{0}, NTL::GF2{1}};
+    x = bits_to_mpf(bits, prec);
+    res = 1.40625;
+    EXPECT_TRUE(abs(x - res) < err);
 }
 

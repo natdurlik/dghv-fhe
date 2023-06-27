@@ -117,13 +117,14 @@ FullyScheme::post_process(mpz_class c, const std::vector<mpf_class> &y) {
     std::vector<mpf_class> zf(y.size());
 
     for (int i = 0; i < zf.size(); i++) {
-        zf[i] = mod2f(y[i] * c);
+        zf[i].set_prec(n + 1);
+        zf[i] = mod2f(y[i] * c); // fixme?
     }
 
     // z to bits
     std::vector<std::vector<NTL::GF2>> z(zf.size());
     for (int i = 0; i < z.size(); i++) {
-        z[i] = mpf_to_bits(zf[i], n);
+        z[i] = mpf_to_bits(zf[i], n + 1); // n+1 because n bits of precision AFTER binary point
     }
 
     auto c_bits = mpz_to_bits(c);

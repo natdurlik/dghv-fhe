@@ -196,10 +196,10 @@ TEST(KeyGen, PublicKeyYsInCorrectRange) {
 
 
 TEST(KeyGen, PublicKeySumsToOneOverP) {
-    FullyScheme fhe(9, 0);
-    SecretKey secret_key;
-    PublicKey public_key;
-    std::tie(secret_key, public_key) = fhe.key_gen();
+    long seed = time(nullptr);
+    std::clog << seed << std::endl;
+    FullyScheme fhe(8, seed); // fixme
+    auto [secret_key, public_key] = fhe.key_gen();
 
     mpf_class sum(0, fhe.kappa + 2);
     mpf_class x(1, fhe.kappa + 2);
@@ -215,4 +215,89 @@ TEST(KeyGen, PublicKeySumsToOneOverP) {
     err /= pow_of_two(fhe.kappa);
 
     EXPECT_TRUE(abs(x - sum) < err);
+}
+
+TEST(PostProcess, RationalBitsSumWithinQuarterOfAnInteger) {
+    long seed = time(nullptr);
+    std::clog << seed << std::endl;
+    FullyScheme fhe(8, seed);
+    auto [secret_key, public_key] = fhe.key_gen();
+    auto c0 = fhe.encrypt(public_key.pk, NTL::GF2{0});
+
+    auto [c_star, z] = fhe.post_process(c0, public_key.y);
+    mpf_class sum(0, fhe.n + 1);
+
+    for (int i = 0; i < z.size(); i++) {
+        if (IsOne(secret_key.s[i])) {
+            mpf_class curr = bits_to_mpf(z[i], fhe.n + 1);
+            sum += curr;
+            sum = mod2f(sum);
+        }
+    }
+
+    auto bits = mpf_to_bits(sum, 5);
+    EXPECT_EQ(bits[1], bits[2]);
+}
+
+class PostProcessCases : public ::testing::TestWithParam<std::pair<int, long>> {
+};
+
+TEST_P(PostProcessCases, RationalBitsSumWithinQuarterOfAnInteger) {
+    const auto &param = GetParam();
+    FullyScheme fhe(param.first, param.second);
+    auto [secret_key, public_key] = fhe.key_gen();
+    auto c0 = fhe.encrypt(public_key.pk, NTL::GF2{0});
+
+    auto [c_star, z] = fhe.post_process(c0, public_key.y);
+    mpf_class sum(0, fhe.n + 1);
+
+    for (int i = 0; i < z.size(); i++) {
+        if (IsOne(secret_key.s[i])) {
+            mpf_class curr = bits_to_mpf(z[i], fhe.n + 1);
+            sum += curr;
+            sum = mod2f(sum);
+        }
+    }
+
+    auto bits = mpf_to_bits(sum, 4);
+
+    EXPECT_EQ(bits[1], bits[2]);
+}
+
+
+INSTANTIATE_TEST_SUITE_P(SchemeParameters, PostProcessCases, ::testing::Values(
+        std::pair{8, 0},
+        std::pair{8, 1},
+        std::pair{8, 3},
+        std::pair{8, 4},
+        std::pair{9, 0},
+        std::pair{9, 1},
+        std::pair{9, 2},
+        std::pair{10, 1687810596}
+));
+
+TEST_P(PostProcessCases, RationalBitsSumRoundsToCOverP) {
+    const auto &param = GetParam();
+    FullyScheme fhe(param.first, param.second);
+    auto [secret_key, public_key] = fhe.key_gen();
+    auto c = fhe.encrypt(public_key.pk, NTL::GF2{1});
+
+    auto [c_star, z] = fhe.post_process(c, public_key.y);
+    mpf_class sum(0, fhe.n + 1);
+
+    for (int i = 0; i < z.size(); i++) {
+        if (IsOne(secret_key.s[i])) {
+            mpf_class curr = bits_to_mpf(z[i], fhe.n + 1);
+            sum += curr;
+            sum = mod2f(sum);
+        }
+    }
+    mpz_class rounded_sum = round_to_closest(sum) % 2;
+
+    mpf_class c_div_p(c, fhe.kappa + 2);
+    c_div_p /= secret_key.p;
+    c_div_p = mod2f(c_div_p);
+    mpz_class rounded_cp = round_to_closest(c_div_p) % 2;
+
+    EXPECT_EQ(rounded_cp, rounded_sum);
 }
