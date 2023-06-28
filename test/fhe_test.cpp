@@ -301,3 +301,86 @@ TEST_P(PostProcessCases, RationalBitsSumRoundsToCOverP) {
 
     EXPECT_EQ(rounded_cp, rounded_sum);
 }
+
+TEST(ShiftAndMod2, SimpleChecks) {
+    std::vector<std::vector<NTL::GF2>> W{
+            {NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{1}, NTL::GF2{0}},
+            {NTL::GF2{1}, NTL::GF2{0}, NTL::GF2{1}, NTL::GF2{0}},
+            {NTL::GF2{0}, NTL::GF2{1}, NTL::GF2{0}, NTL::GF2{0}},
+            {NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{1}, NTL::GF2{0}},
+            {NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{1}, NTL::GF2{0}},
+            {NTL::GF2{1}, NTL::GF2{1}, NTL::GF2{0}, NTL::GF2{0}},
+            {NTL::GF2{0}, NTL::GF2{1}, NTL::GF2{1}, NTL::GF2{0}},
+    };
+
+    FullyScheme fhe(8, 0);
+    auto out = fhe.shift_and_mod2(W, 7);
+    std::vector<std::vector<NTL::GF2>> w{
+            {NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{0}},
+            {NTL::GF2{0}, NTL::GF2{1}, NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{0}},
+            {NTL::GF2{0}, NTL::GF2{1}, NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{0}},
+            {NTL::GF2{0}, NTL::GF2{1}, NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{0}},
+            {NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{1}, NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{0}},
+            {NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{1}, NTL::GF2{1}, NTL::GF2{0}},
+            {NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{1}, NTL::GF2{1}, NTL::GF2{0}},
+    };
+    EXPECT_EQ(out.size(), W.size());
+
+    for (int i = 0; i < w.size(); i++) {
+        EXPECT_EQ(out[i].size(), w[i].size());
+        for (int j = 0; j < w[i].size(); j++) {
+            EXPECT_EQ(out[i][j], w[i][j]);
+        }
+    }
+}
+
+class GenerateFewerNumbers : public ::testing::TestWithParam<std::pair<int, long>> {
+};
+
+TEST_P(GenerateFewerNumbers, OutputHasTheSameSum) {
+    const auto &param = GetParam();
+    long seed = param.first;
+    FullyScheme fhe(8, seed);
+    auto [secret_key, public_key] = fhe.key_gen();
+    auto c = fhe.encrypt(public_key.pk, NTL::GF2{param.second});
+
+    auto [c_star, z] = fhe.post_process(c, public_key.y);
+
+    auto a = z;
+    for (int i = 0; i < a.size(); i++) {
+        for (int j = 0; j < a[i].size(); j++) {
+            a[i][j] *= secret_key.s[i];
+        }
+    }
+
+    auto w = fhe.generate_fewer_numbers(a);
+
+    mpf_class w_sum(0, fhe.n + 1);
+    mpf_class a_sum(0, fhe.n + 1);
+    mpf_class curr(0, fhe.n + 1);
+
+    for (int i = 0; i < a.size(); i++) {
+        curr = bits_to_mpf(a[i], fhe.n + 1);
+        a_sum += curr;
+        a_sum = mod2f(a_sum);
+    }
+
+    for (int i = 0; i < w.size(); i++) {
+        curr = bits_to_mpf(w[i], fhe.n + 1);
+        w_sum += curr;
+        w_sum = mod2f(w_sum);
+    }
+
+    mpf_class err(0.000000001, 100);
+
+    EXPECT_TRUE(abs(w_sum - a_sum) < err);
+}
+
+INSTANTIATE_TEST_SUITE_P(SchemeParameters, GenerateFewerNumbers, ::testing::Values(
+        std::pair{0, 0},
+        std::pair{0, 1},
+        std::pair{1, 1},
+        std::pair{1687900131, 0},
+        std::pair{1687899741, 0},
+        std::pair{1687899700, 1}
+));

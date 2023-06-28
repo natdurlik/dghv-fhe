@@ -12,140 +12,52 @@ T add_circuit(T m1, T m2) {
     return m1 + m2;
 }
 
-vector<NTL::GF2> to_bits(mpf_class f, unsigned n) {
-    vector<NTL::GF2> bits(n + 1, NTL::GF2{0}); // n+1 because n bits of precision AFTER binary point
-    mp_exp_t exp;
-    string bits_str = f.get_str(exp, 2, n);
-    if (-exp + 1 < 0) {
-        cout << "unexpected exp" << endl;
-        return bits;
-    }
-    unsigned start = -exp + 1;
-
-//    unsigned str_idx = 0u;
-    for (auto i = start, str_idx = 0u; i < bits.size() && str_idx < bits_str.size(); i++, str_idx++) {
-        if (bits_str[str_idx] == '1') {
-            bits[i] = NTL::GF2{1};
-        }
-    }
-    return bits;
-}
-
 int main() {
-
-//    FullyScheme fhe(6, 0);
-//    SecretKey secret_key;
-//    PublicKey public_key;
-//    std::tie(secret_key, public_key) = fhe.key_gen();
-//    auto [sk, pk] = fhe.key_gen();
-//
-//    cout << "kappa = " << fhe.kappa << endl;
-//    cout << "gamma = " << fhe.gamma / fhe.ro << endl;
-//    cout << "n = " << fhe.n << endl;
-//
-//    mpf_class f(0.5, 100);
-//    mp_exp_t exp = 1;
-//    cout << f.get_str(exp, 2, fhe.n) << endl;
-//    cout << "exp = " << exp << endl;
-//    auto bits = mpf_to_bits(f, fhe.n);
-//
-//    cout << "GF2 bits" << endl;
-//    for (auto x: bits) {
-//        cout << x;
-//    }
-//    cout << endl;
-    //
-
-//    mpf_class f("0.001", 100, 2);
-//    cout << f << endl;
-//
-//    vector<NTL::GF2> bits{NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{1}};
-//    mpf_class f2 = bits_to_mpf(bits, 100);
-//    cout << f2 << endl;
-//    mpz_class x = 8;
-//    auto stri = x.get_str(2);
-//    cout << stri << endl;
-//    mpf_class()
-
-//    mpf_class x("1.99999999999", 100, 10);
-//    cout << x << endl;
-//    mp_exp_t exp;
-//    std::string bits_str = x.get_str(exp, 2);
-//    cout << exp << endl;
-//    cout << bits_str << endl;
-
-
-//    cout << "size mpf=" << sizeof(mpf_class) << endl;
-//    cout << "size mpf instance?=" << sizeof(f) << endl;
-//    cout << "size mpz=" << sizeof(mpz_class) << endl;
-//    cout << "size vector=" << sizeof(vector<int>) << endl;
-//    cout << "size vector vector int=" << sizeof(vector<vector<int>>) << endl;
-//    cout << "size void*=" << sizeof(void *) << endl;
-//    cout << "size int=" << sizeof(int) << endl;
-
-    FullyScheme fhe(8, time(nullptr));
+    // not working: 1687899577 1687899613 1687899648 1687899700 1687899741 1687899757 1687899772 1687900131
+    // 1.9375?? 1687899624 1687899678 0.9375 1687899782
+    long seed = time(nullptr);
+    cout << "with seed = " << seed << endl;
+    FullyScheme fhe(8, seed);
     std::cout << "theta = " << fhe.theta << std::endl;
     std::cout << "n = " << fhe.n << std::endl;
     auto [secret_key, public_key] = fhe.key_gen();
     cout << "key_gen" << endl;
-    auto c = fhe.encrypt(public_key.pk, NTL::GF2{0});
+    auto c = fhe.encrypt(public_key.pk, NTL::GF2{1});
     cout << "c<0? = " << (c < 0) << endl;
 
-    std::vector<mpf_class> zf(public_key.y.size());
+    auto [c_star, z] = fhe.post_process(c, public_key.y);
 
-    for (int i = 0; i < zf.size(); i++) {
-        zf[i].set_prec(fhe.n + 1);
-        zf[i] = mod2f(public_key.y[i] * c); // fixme?
-    }
-
-    mpf_class sum(0, fhe.n + 1);
-    for (int i = 0; i < zf.size(); i++) {
-        if (IsOne(secret_key.s[i])) {
-            sum += zf[i];
-            sum = mod2f(sum);
+    auto a = z;
+    for (int i = 0; i < a.size(); i++) {
+        for (int j = 0; j < a[i].size(); j++) {
+            a[i][j] *= secret_key.s[i];
         }
     }
 
-    std::cout << "sum = " << sum << std::endl;
+    auto w = fhe.generate_fewer_numbers(a);
 
-    auto bits = mpf_to_bits(sum, 5);
-    std::cout << bits[1] << std::endl;
-    std::cout << bits[2] << std::endl;
-    if (bits[1] != bits[2]) {
-        cout << "FALSE" << endl;
+    cout << a.size() << endl;
+    cout << z[0].size() << endl;
+    cout << w.size() << endl;
+
+    mpf_class w_sum(0, fhe.n + 1);
+    mpf_class a_sum(0, fhe.n + 1);
+    mpf_class curr(0, fhe.n + 1);
+
+    for (int i = 0; i < a.size(); i++) {
+        curr = bits_to_mpf(a[i], fhe.n + 1);
+        a_sum += curr;
+        a_sum = mod2f(a_sum);
     }
 
-    mpf_class c_div_p(c, fhe.kappa + 2);
-    c_div_p /= secret_key.p;
-    cout << "c/p = " << c_div_p << endl;
-    c_div_p = mod2f(c_div_p);
-    cout << "c/p mod2 = " << c_div_p << endl;
+    for (int i = 0; i < w.size(); i++) {
+        curr = bits_to_mpf(w[i], fhe.n + 1);
+        w_sum += curr;
+        w_sum = mod2f(w_sum);
+    }
 
-//    mpf_class f(-121.8);
-//    cout << round_to_closest(f) << endl;
-
-//    auto [c_star, z] = fhe.post_process(c0, public_key.y);
-//    mpf_class sum(0, fhe.n + 1);
-//
-//    std::cout << "zi size = " << z[0].size() << std::endl;
-//
-//    for (int i = 0; i < z.size(); i++) {
-//        if (IsOne(secret_key.s[i])) {
-//            mpf_class curr = bits_to_mpf(z[i], fhe.n + 1);
-//            sum += curr;
-//            sum = mod2f(sum);
-//        }
-//    }
-//    std::cout << "sum = " << sum << std::endl;
-//
-//    auto bits = mpf_to_bits(sum, 5);
-//    std::cout << bits[1] << std::endl;
-//    std::cout << bits[2] << std::endl;
-//
-//    mpf_class c_div_p(c0, fhe.kappa + 2);
-//    c_div_p /= secret_key.p;
-//    c_div_p = mod2f(c_div_p);
-//    cout << "c/p = " << c_div_p << endl;
+    cout << "a_sum = " << a_sum << endl;
+    cout << "w_sum = " << w_sum << endl;
 
     return 0;
 }

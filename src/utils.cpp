@@ -110,17 +110,35 @@ mpf_class bits_to_mpf(const std::vector<NTL::GF2> &bits, int prec) {
 
 mpz_class round_to_closest(mpf_class x) { // only for tests, probably wrong in corner cases
     mpz_class integral(x);
-    x-=integral;
-    if(x<0) {
-        x=-x;
-        if(x>=0.5) {
-            return integral-1;
+    x -= integral;
+    if (x < 0) {
+        x = -x;
+        if (x >= 0.5) {
+            return integral - 1;
         }
         return integral;
     }
 
-    if(x>=0.5) {
-        return integral+1;
+    if (x >= 0.5) {
+        return integral + 1;
     }
     return integral;
+}
+
+std::vector<mpz_class> c_star_to_mpz(const std::vector<NTL::GF2> &bits) {
+    std::vector<mpz_class> v(bits.size(), 0);
+    for (int i = 0; i < bits.size(); i++) {
+        if (IsOne(bits[i])) {
+            v[i] = 1;
+        }
+    }
+    return v;
+}
+
+std::vector<std::vector<mpz_class>> z_to_mpz(const std::vector<std::vector<NTL::GF2>> &bits) {
+    std::vector<std::vector<mpz_class>> v(bits.size());
+    for (int i = 0; i < bits.size(); i++) {
+        v[i] = c_star_to_mpz(bits[i]);
+    }
+    return v;
 }

@@ -41,12 +41,12 @@ public:
         std::vector<std::vector<T>> a = z;
         for (int i = 0; i < a.size(); i++) {
             for (int j = 0; j < a[i].size(); j++) {
-                a[i] *= s[i];
+                a[i][j] *= s[i];
             }
         }
 
         // generate w_j
-        std::vector<std::vector<T>> w = generate_fewer_numbers(a);
+//        std::vector<std::vector<T>> w = generate_fewer_numbers(a);
 
         // three for two sum w_j
 
@@ -73,12 +73,20 @@ public:
 
         // w_j=(2^{-j}W_{-j}) shift 2^{-j} and mod2
         // w_j = w0.w1w2...
-        std::vector<std::vector<T>> w(cols.size(), std::vector<T>(n + 1, T{}));
+        std::vector<std::vector<T>> w = shift_and_mod2(W, n + 1); // fixme less than n bits of precision?
+
+        return w;
+    }
+
+    template<typename T>
+    std::vector<std::vector<T>> shift_and_mod2(const std::vector<std::vector<T>> &W, int prec) {
+
+        std::vector<std::vector<T>> w(W.size(), std::vector<T>(prec, T{}));
         for (int j = 0; j < w.size(); j++) {
             int w_i = 0;
             int i = j;
 
-            while (i > W.size() && i >= 0 && w_i < w[j].size()) {
+            while (i >= W[j].size()) {
                 i--;
                 w_i++;
             }
