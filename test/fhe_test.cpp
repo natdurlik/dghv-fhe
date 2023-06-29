@@ -384,3 +384,48 @@ INSTANTIATE_TEST_SUITE_P(SchemeParameters, GenerateFewerNumbers, ::testing::Valu
         std::pair{1687899741, 0},
         std::pair{1687899700, 1}
 ));
+
+
+TEST(CarrySaveAdderMod2, SimpleChecks) {
+    FullyScheme fhe(8, 0);
+
+    std::vector<NTL::GF2> a{NTL::GF2{1}, NTL::GF2{0}, NTL::GF2{1}, NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{1}};
+    std::vector<NTL::GF2> b{NTL::GF2{1}, NTL::GF2{1}, NTL::GF2{1}, NTL::GF2{0}, NTL::GF2{1}, NTL::GF2{0}};
+    std::vector<NTL::GF2> c{NTL::GF2{1}, NTL::GF2{0}, NTL::GF2{1}, NTL::GF2{0}, NTL::GF2{1}, NTL::GF2{1}};
+
+    auto [out_sum, out_carry] = fhe.carry_save_adder_mod2(a, b, c);
+    std::vector<NTL::GF2> sum{NTL::GF2{1}, NTL::GF2{1}, NTL::GF2{1}, NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{0}};
+    std::vector<NTL::GF2> carry{NTL::GF2{0}, NTL::GF2{1}, NTL::GF2{0}, NTL::GF2{1}, NTL::GF2{1}, NTL::GF2{0}};
+
+    EXPECT_EQ(out_sum.size(), sum.size());
+    for (int i = 0; i < sum.size(); i++) {
+        EXPECT_EQ(out_sum[i], sum[i]);
+    }
+
+    EXPECT_EQ(out_carry.size(), carry.size());
+    for (int i = 0; i < carry.size(); i++) {
+        EXPECT_EQ(out_carry[i], carry[i]);
+    }
+}
+
+TEST(KForTwo, ProducesValidSumMod2) {
+    FullyScheme fhe(8, 0);
+    int prec = 100;
+    std::vector<mpf_class> rationals{mpf_class(0.125, prec), mpf_class(1.875, prec), mpf_class(1.5, prec),
+                                     mpf_class(0.25, prec), mpf_class(0.6875, prec), mpf_class(1.4375, prec)};
+    std::vector<std::vector<NTL::GF2>> w;
+    for (const auto &rational: rationals) {
+        w.push_back(mpf_to_bits(rational, 5));
+    }
+
+    auto [s1, s2] = fhe.k_for_two(w);
+    mpf_class out_sum = bits_to_mpf(s1, prec) + bits_to_mpf(s2, prec);
+    mpf_class sum(0, prec);
+    for (const auto &rational: rationals) {
+        sum += rational;
+        sum = mod2f(sum);
+    }
+
+    mpf_class err(0.000001, prec);
+    EXPECT_TRUE(abs(out_sum - sum) < err);
+}

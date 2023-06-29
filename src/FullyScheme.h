@@ -34,7 +34,7 @@ public:
     encrypt_secret_key_bits(const std::vector<NTL::GF2> &s, mpz_class p, const std::vector<mpz_class> &pk);
 
     template<typename T>
-    T recrypt(std::vector<T> c, std::vector<T> s, std::vector<std::vector<T>> z) {
+    T greased_decrypt(std::vector<T> c, std::vector<T> s, std::vector<std::vector<T>> z) {
 
         // assert s.size() == z.size()
         // set a_i = s[i] * z[i]
@@ -46,14 +46,57 @@ public:
         }
 
         // generate w_j
-//        std::vector<std::vector<T>> w = generate_fewer_numbers(a);
+        std::vector<std::vector<T>> w = generate_fewer_numbers(a);
 
         // three for two sum w_j
+        auto [s1, s2] = k_for_two(w);
 
         // sum last two rationals with round mod 2
 
         return c.back();
     }
+
+    template<typename T>
+    std::pair<std::vector<T>, std::vector<T>> k_for_two(const std::vector<std::vector<T>> &w) {
+        if (w.size() < 2) {
+            throw std::logic_error("expected at least two elements to add");
+        }
+        if (w.size() == 2) {
+            return {w[0], w[1]};
+        }
+
+        std::vector<T> a = w[0];
+        std::vector<T> b = w[1];
+
+        for (int i = 2; i < w.size(); i++) {
+            std::tie(a, b) = carry_save_adder_mod2(a, b, w[i]);
+        }
+
+        return {a, b};
+    }
+
+    template<typename T>
+    std::pair<std::vector<T>, std::vector<T>>
+    carry_save_adder_mod2(const std::vector<T> &a, const std::vector<T> &b, const std::vector<T> &c) {
+        if (a.size() != b.size() || a.size() != c.size()) {
+            throw std::logic_error("expected equal sizes of addends");
+        }
+        // a0 . a1 a2 a3 ...
+
+        std::vector<T> sum(a.size());
+        std::vector<T> carry(a.size(), T{});
+
+        for (int i = 0; i < a.size(); i++) {
+            sum[i] = a[i] + b[i] + c[i];
+        }
+
+        for (int i = 0; i + 1 < a.size(); i++) {
+            carry[i] = a[i + 1] * b[i + 1] + a[i + 1] * c[i + 1] + b[i + 1] * c[i + 1];
+        }
+
+        return {sum, carry};
+    }
+
 
     template<typename T>
     std::vector<std::vector<T>> generate_fewer_numbers(const std::vector<std::vector<T>> &a) {
