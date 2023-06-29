@@ -429,3 +429,22 @@ TEST(KForTwo, ProducesValidSumMod2) {
     mpf_class err(0.000001, prec);
     EXPECT_TRUE(abs(out_sum - sum) < err);
 }
+
+TEST(OrT, SimpleCheck) {
+    FullyScheme fhe(8, 0);
+    NTL::GF2 a{0};
+    NTL::GF2 b{0};
+    EXPECT_EQ(fhe.or_t(a,b),NTL::GF2{0});
+
+    a=NTL::GF2{1};
+    b=NTL::GF2{1};
+    EXPECT_EQ(fhe.or_t(a,b),NTL::GF2{1});
+
+    a=NTL::GF2{1};
+    b=NTL::GF2{0};
+    EXPECT_EQ(fhe.or_t(a,b),NTL::GF2{1});
+
+    a=NTL::GF2{0};
+    b=NTL::GF2{1};
+    EXPECT_EQ(fhe.or_t(a,b),NTL::GF2{1});
+}

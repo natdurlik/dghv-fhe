@@ -139,20 +139,20 @@ TEST(MpfToBits, SimpleChecks) {
     mpf_class f(0.5, n);
     auto bits = mpf_to_bits(f, n);
 
-    EXPECT_EQ(bits.size(), n + 1);
+    EXPECT_EQ(bits.size(), n);
     std::vector<NTL::GF2> ans{NTL::GF2{0}, NTL::GF2{1}};
     to_bits_check_aux(bits, ans);
 
     f = 0.125;
     bits = mpf_to_bits(f, n);
     ans = {NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{1}};
-    EXPECT_EQ(bits.size(), n + 1);
+    EXPECT_EQ(bits.size(), n);
     to_bits_check_aux(bits, ans);
 
     f = 1.03125;
     bits = mpf_to_bits(f, n);
     ans = {NTL::GF2{1}, NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{1}};
-    EXPECT_EQ(bits.size(), n + 1);
+    EXPECT_EQ(bits.size(), n);
     to_bits_check_aux(bits, ans);
 }
 

@@ -5,7 +5,8 @@ FullyScheme::FullyScheme(int security, long rd_seed) : SomewhatScheme(security, 
     theta = lambda;
 //    kappa = gamma * eta / ro_prim;
     kappa = gamma + 2;
-    Theta = 1000; // fixme
+//    tau = 50; //fixme
+    Theta = 50; // fixme
 //    Theta = 20;
     n = std::ceil(log2(theta)) + 3;
 }

@@ -34,8 +34,7 @@ public:
     encrypt_secret_key_bits(const std::vector<NTL::GF2> &s, mpz_class p, const std::vector<mpz_class> &pk);
 
     template<typename T>
-    T greased_decrypt(std::vector<T> c, std::vector<T> s, std::vector<std::vector<T>> z) {
-
+    T greased_decrypt(const std::vector<T> &c, const std::vector<T> &s, const std::vector<std::vector<T>> &z) {
         // assert s.size() == z.size()
         // set a_i = s[i] * z[i]
         std::vector<std::vector<T>> a = z;
@@ -52,8 +51,21 @@ public:
         auto [s1, s2] = k_for_two(w);
 
         // sum last two rationals with round mod 2
+        T lsb = sum_round_mod2(s1, s2);
 
-        return c.back();
+        return c.back() + lsb;
+    }
+
+    template<typename T>
+    T or_t(const T &a, const T &b) {
+        return (a + b) + (a * b);
+    }
+
+    template<typename T>
+    T sum_round_mod2(const std::vector<T> &a, const std::vector<T> &b) {
+        T col = a[0] + b[0];
+        T row = a[0] + a[1];
+        return a[0] + b[0] + (or_t(col, row));
     }
 
     template<typename T>
