@@ -5,8 +5,9 @@ FullyScheme::FullyScheme(int security, long rd_seed) : SomewhatScheme(security, 
     theta = lambda;
 //    kappa = gamma * eta / ro_prim;
     kappa = gamma + 2;
-//    tau = 50; //fixme
-    Theta = 50; // fixme
+//    tau = 35; //fixme
+    Theta = 35; // fixme
+    eta *= 40; // *= Theta
 //    Theta = 20;
     n = std::ceil(log2(theta)) + 3;
 }
@@ -32,7 +33,7 @@ void FullyScheme::set_theta_bits_to_one(std::vector<NTL::GF2> &s) {
 
 void
 FullyScheme::fill_with_random_integers_with_condition(std::vector<mpz_class> &u, const std::vector<NTL::GF2> &s,
-                                                      mpz_class range, mpz_class sum_to) {
+                                                      const mpz_class &range, const mpz_class &sum_to) {
     mpz_class sum = 0;
     unsigned long last_idx = 0;
     for (unsigned long i = 0; i < u.size(); i++) {
@@ -54,7 +55,8 @@ FullyScheme::fill_with_random_integers_with_condition(std::vector<mpz_class> &u,
 }
 
 std::vector<mpz_class>
-FullyScheme::encrypt_secret_key_bits(const std::vector<NTL::GF2> &s, mpz_class p, const std::vector<mpz_class> &pk) {
+FullyScheme::encrypt_secret_key_bits(const std::vector<NTL::GF2> &s, const mpz_class &p,
+                                     const std::vector<mpz_class> &pk) {
     std::vector<mpz_class> encrypted_s(s.size());
 
     // fixme ?
@@ -114,7 +116,7 @@ mpz_class FullyScheme::encrypt(const std::vector<mpz_class> &pk, NTL::GF2 messag
 }
 
 std::pair<std::vector<NTL::GF2>, std::vector<std::vector<NTL::GF2>>>
-FullyScheme::post_process(mpz_class c, const std::vector<mpf_class> &y) {
+FullyScheme::post_process(const mpz_class &c, const std::vector<mpf_class> &y) {
     std::vector<mpf_class> zf(y.size());
 
     for (int i = 0; i < zf.size(); i++) {
@@ -133,8 +135,15 @@ FullyScheme::post_process(mpz_class c, const std::vector<mpf_class> &y) {
     return {c_bits, z};
 }
 
-NTL::GF2 FullyScheme::decrypt(mpz_class sk, mpz_class c) {
+NTL::GF2 FullyScheme::decrypt(const mpz_class &sk, const mpz_class &c) {
     return SomewhatScheme::decrypt(sk, c);
+}
+
+mpz_class FullyScheme::recrypt(const mpz_class &c, const PublicKey &public_key) {
+    auto [c_star_bits, z_bits] = post_process(c, public_key.y);
+    auto c_star_mpz = c_star_to_mpz(c_star_bits);
+    auto z_mpz = z_to_mpz(z_bits);
+    return squashed_decrypt(c_star_mpz, public_key.e_sk, z_mpz);
 }
 
 

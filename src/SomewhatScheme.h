@@ -25,13 +25,13 @@ public:
 
     mpz_class encrypt(const std::vector<mpz_class> &pk, NTL::GF2 m);
 
-    NTL::GF2 decrypt(mpz_class sk, mpz_class c);
+    NTL::GF2 decrypt(const mpz_class& sk, const mpz_class& c);
 
-    std::vector<mpz_class> sample_public_key(mpz_class p);
+    std::vector<mpz_class> sample_public_key(const mpz_class& p);
 
     mpz_class sample_secret_key();
 
-    mpz_class draw_from_distribution(mpz_class q_range, mpz_class r_range, mpz_class p);
+    mpz_class draw_from_distribution(const mpz_class& q_range, const mpz_class& r_range, const mpz_class& p);
 
     double log2(int x);
 };

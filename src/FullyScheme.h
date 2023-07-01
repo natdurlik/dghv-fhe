@@ -21,20 +21,22 @@ public:
     mpz_class encrypt(const std::vector<mpz_class> &pk, NTL::GF2 message);
 
     std::pair<std::vector<NTL::GF2>, std::vector<std::vector<NTL::GF2>>>
-    post_process(mpz_class c, const std::vector<mpf_class> &y);
+    post_process(const mpz_class &c, const std::vector<mpf_class> &y);
 
-    NTL::GF2 decrypt(mpz_class sk, mpz_class c);
+    NTL::GF2 decrypt(const mpz_class &sk, const mpz_class &c);
 
     void set_theta_bits_to_one(std::vector<NTL::GF2> &s);
 
     void fill_with_random_integers_with_condition(std::vector<mpz_class> &u, const std::vector<NTL::GF2> &s,
-                                                  mpz_class range, mpz_class sum_to);
+                                                  const mpz_class &range, const mpz_class &sum_to);
 
     std::vector<mpz_class>
-    encrypt_secret_key_bits(const std::vector<NTL::GF2> &s, mpz_class p, const std::vector<mpz_class> &pk);
+    encrypt_secret_key_bits(const std::vector<NTL::GF2> &s, const mpz_class &p, const std::vector<mpz_class> &pk);
+
+    mpz_class recrypt(const mpz_class &c, const PublicKey& public_key);
 
     template<typename T>
-    T greased_decrypt(const std::vector<T> &c, const std::vector<T> &s, const std::vector<std::vector<T>> &z) {
+    T squashed_decrypt(const std::vector<T> &c, const std::vector<T> &s, const std::vector<std::vector<T>> &z) {
         // assert s.size() == z.size()
         // set a_i = s[i] * z[i]
         std::vector<std::vector<T>> a = z;
@@ -63,6 +65,7 @@ public:
 
     template<typename T>
     T sum_round_mod2(const std::vector<T> &a, const std::vector<T> &b) {
+        // assumes sum of a+b is within 1/4 of and integer
         T col = a[0] + b[0];
         T row = a[0] + a[1];
         return a[0] + b[0] + (or_t(col, row));

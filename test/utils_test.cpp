@@ -213,3 +213,28 @@ TEST(BitsToMpf, SimpleChecks) {
     EXPECT_TRUE(abs(x - res) < err);
 }
 
+TEST(ZToMpz, SimpleChecks) {
+    std::vector<std::vector<NTL::GF2>> z{
+            {NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{1}, NTL::GF2{1}, NTL::GF2{1}},
+            {NTL::GF2{1}, NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{1}},
+            {NTL::GF2{0}, NTL::GF2{1}, NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{1}, NTL::GF2{0}},
+            {NTL::GF2{0}, NTL::GF2{1}, NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{1}}
+    };
+
+    std::vector<std::vector<mpz_class>> z_mpz{
+            {0, 0, 0, 1, 1, 1},
+            {1, 0, 0, 0, 0, 1},
+            {0, 1, 0, 0, 1, 0},
+            {0, 1, 0, 0, 0, 1}
+    };
+
+    auto out = z_to_mpz(z);
+    ASSERT_EQ(out.size(), z_mpz.size());
+    for (int i = 0; i < z_mpz.size(); i++) {
+        ASSERT_EQ(out[i].size(), z_mpz[i].size());
+        for (int j = 0; j < z_mpz[i].size(); j++) {
+            EXPECT_EQ(out[i][j], z_mpz[i][j]);
+        }
+    }
+}
+

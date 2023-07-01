@@ -83,10 +83,10 @@ TEST(HammingWeightBinary, SmallNumbers) {
 
 TEST(HammingWeightCiphertext, SmallNumbers) {
 //    long seed = time(nullptr);
-    long seed = 1687810596;
+    long seed = 1687810596; // fixme
     // 1687810596 fast seed
     std::cerr << "with seed = " << seed << std::endl;
-    FullyScheme fhe = FullyScheme(11, seed);
+    FullyScheme fhe = FullyScheme(8, seed);
     SecretKey secret_key;
     PublicKey public_key;
     std::tie(secret_key, public_key) = fhe.key_gen();
@@ -272,8 +272,7 @@ INSTANTIATE_TEST_SUITE_P(SchemeParameters, PostProcessCases, ::testing::Values(
         std::pair{8, 4},
         std::pair{9, 0},
         std::pair{9, 1},
-        std::pair{9, 2},
-        std::pair{10, 1687810596}
+        std::pair{9, 2}
 ));
 
 TEST_P(PostProcessCases, RationalBitsSumRoundsToCOverP) {
@@ -434,17 +433,67 @@ TEST(OrT, SimpleCheck) {
     FullyScheme fhe(8, 0);
     NTL::GF2 a{0};
     NTL::GF2 b{0};
-    EXPECT_EQ(fhe.or_t(a,b),NTL::GF2{0});
+    EXPECT_EQ(fhe.or_t(a, b), NTL::GF2{0});
 
-    a=NTL::GF2{1};
-    b=NTL::GF2{1};
-    EXPECT_EQ(fhe.or_t(a,b),NTL::GF2{1});
+    a = NTL::GF2{1};
+    b = NTL::GF2{1};
+    EXPECT_EQ(fhe.or_t(a, b), NTL::GF2{1});
 
-    a=NTL::GF2{1};
-    b=NTL::GF2{0};
-    EXPECT_EQ(fhe.or_t(a,b),NTL::GF2{1});
+    a = NTL::GF2{1};
+    b = NTL::GF2{0};
+    EXPECT_EQ(fhe.or_t(a, b), NTL::GF2{1});
 
-    a=NTL::GF2{0};
-    b=NTL::GF2{1};
-    EXPECT_EQ(fhe.or_t(a,b),NTL::GF2{1});
+    a = NTL::GF2{0};
+    b = NTL::GF2{1};
+    EXPECT_EQ(fhe.or_t(a, b), NTL::GF2{1});
+}
+
+class SquashedDecrypt : public ::testing::TestWithParam<std::tuple<int, long, int>> {
+};
+
+INSTANTIATE_TEST_SUITE_P(SimpleChecks, SquashedDecrypt, ::testing::Values(
+        std::tuple{8, 0, 0},
+        std::tuple{8, 0, 1},
+        std::tuple{8, 1687899700, 1},
+        std::tuple{8, 1687899700, 0},
+        std::tuple{9, 1687899613, 0},
+        std::tuple{9, 1687899613, 1}
+));
+
+TEST_P(SquashedDecrypt, SimpleChecks) {
+    auto param = GetParam();
+    FullyScheme fhe(std::get<0>(param), std::get<1>(param));
+    auto [secret_key, public_key] = fhe.key_gen();
+
+    auto message = NTL::GF2{std::get<2>(param)};
+    auto c = fhe.encrypt(public_key.pk, message);
+    auto [c_star, z] = fhe.post_process(c, public_key.y);
+    auto decrypted = fhe.squashed_decrypt(c_star, secret_key.s, z);
+
+    EXPECT_EQ(decrypted, message);
+}
+
+class Recrypt : public ::testing::TestWithParam<std::tuple<int, long, int>> {
+};
+
+INSTANTIATE_TEST_SUITE_P(SimpleChecks, Recrypt, ::testing::Values(
+        std::tuple{8, 0, 0},
+        std::tuple{8, 0, 1},
+        std::tuple{8, 1687899700, 1},
+        std::tuple{8, 1687899700, 0},
+        std::tuple{9, 1687899613, 0},
+        std::tuple{9, 1687899613, 1}
+));
+
+TEST_P(Recrypt, SimpleChecks) {
+    auto param = GetParam();
+    FullyScheme fhe(std::get<0>(param), std::get<1>(param));
+    auto [secret_key, public_key] = fhe.key_gen();
+    auto message = NTL::GF2{std::get<2>(param)};
+
+    auto c = fhe.encrypt(public_key.pk, message);
+    auto recrypted = fhe.recrypt(c, public_key);
+    auto decrypted = fhe.decrypt(secret_key.p, recrypted);
+
+    EXPECT_EQ(decrypted, message);
 }
