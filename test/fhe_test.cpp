@@ -336,6 +336,15 @@ TEST(ShiftAndMod2, SimpleChecks) {
 class GenerateFewerNumbers : public ::testing::TestWithParam<std::pair<int, long>> {
 };
 
+INSTANTIATE_TEST_SUITE_P(SchemeParameters, GenerateFewerNumbers, ::testing::Values(
+        std::pair{0, 0},
+        std::pair{0, 1},
+        std::pair{1, 1},
+        std::pair{1687900131, 0},
+        std::pair{1687899741, 0},
+        std::pair{1687899700, 1}
+));
+
 TEST_P(GenerateFewerNumbers, OutputHasTheSameSum) {
     const auto &param = GetParam();
     long seed = param.first;
@@ -374,16 +383,6 @@ TEST_P(GenerateFewerNumbers, OutputHasTheSameSum) {
 
     EXPECT_TRUE(abs(w_sum - a_sum) < err);
 }
-
-INSTANTIATE_TEST_SUITE_P(SchemeParameters, GenerateFewerNumbers, ::testing::Values(
-        std::pair{0, 0},
-        std::pair{0, 1},
-        std::pair{1, 1},
-        std::pair{1687900131, 0},
-        std::pair{1687899741, 0},
-        std::pair{1687899700, 1}
-));
-
 
 TEST(CarrySaveAdderMod2, SimpleChecks) {
     FullyScheme fhe(8, 0);
@@ -454,6 +453,10 @@ class SquashedDecrypt : public ::testing::TestWithParam<std::tuple<int, long, in
 INSTANTIATE_TEST_SUITE_P(SimpleChecks, SquashedDecrypt, ::testing::Values(
         std::tuple{8, 0, 0},
         std::tuple{8, 0, 1},
+        std::tuple{8, 2, 1},
+        std::tuple{8, 2, 0},
+        std::tuple{8, 3, 0},
+        std::tuple{8, 3, 1},
         std::tuple{8, 1687899700, 1},
         std::tuple{8, 1687899700, 0},
         std::tuple{9, 1687899613, 0},
@@ -496,4 +499,117 @@ TEST_P(Recrypt, SimpleChecks) {
     auto decrypted = fhe.decrypt(secret_key.p, recrypted);
 
     EXPECT_EQ(decrypted, message);
+}
+
+class Circuits : public ::testing::TestWithParam<std::pair<int, long>> {
+};
+
+INSTANTIATE_TEST_SUITE_P(SimpleChecks, Circuits, ::testing::Values(
+        std::pair{8, 0},
+        std::pair{8, 1},
+        std::pair{8, 2},
+        std::pair{8, 3},
+        std::pair{8, 4},
+        std::pair{8, 5},
+        std::pair{8, 1687900131}
+));
+
+template<typename T>
+T mul_circuit(T m1, T m2) {
+    return m1 * m2;
+}
+
+void
+mul_aux(FullyScheme &fhe, const PublicKey &public_key, const SecretKey &secret_key, NTL::GF2 m1, NTL::GF2 m2) {
+    auto m_out = mul_circuit(m1, m2);
+
+    auto c1 = fhe.encrypt(public_key.pk, m1);
+    auto c2 = fhe.encrypt(public_key.pk, m2);
+    auto c_out = mul_circuit(c1, c2);
+
+    auto [c_star, z] = fhe.post_process(c_out, public_key.y);
+    auto d_out = fhe.decrypt(secret_key.p, c_out);
+    auto s_out = fhe.squashed_decrypt(c_star, secret_key.s, z);
+
+    auto recrypted = fhe.recrypt(c_out, public_key);
+    auto [c_star_r, z_r] = fhe.post_process(recrypted, public_key.y);
+    auto r_out = fhe.squashed_decrypt(c_star_r, secret_key.s, z_r);
+//    auto r_out = fhe.decrypt(secret_key.p, recrypted);
+
+    EXPECT_EQ(d_out, m_out) << "normal decrypt";
+    EXPECT_EQ(s_out, m_out) << "squash decrypt";
+    EXPECT_EQ(r_out, m_out) << "recrypt decrypt";
+}
+
+template<typename T>
+T add_circuit(T m1, T m2) {
+    return m1 + m2;
+}
+
+void
+add_aux(FullyScheme &fhe, const PublicKey &public_key, const SecretKey &secret_key, NTL::GF2 m1, NTL::GF2 m2) {
+    auto m_out = add_circuit(m1, m2);
+
+    auto c1 = fhe.encrypt(public_key.pk, m1);
+    auto c2 = fhe.encrypt(public_key.pk, m2);
+    auto c_out = add_circuit(c1, c2);
+
+    auto [c_star, z] = fhe.post_process(c_out, public_key.y);
+    auto d_out = fhe.decrypt(secret_key.p, c_out);
+    auto s_out = fhe.squashed_decrypt(c_star, secret_key.s, z);
+
+    auto recrypted = fhe.recrypt(c_out, public_key);
+    auto [c_star_r, z_r] = fhe.post_process(recrypted, public_key.y);
+    auto r_out = fhe.squashed_decrypt(c_star_r, secret_key.s, z_r);
+//    auto r_out = fhe.decrypt(secret_key.p, recrypted);
+
+    EXPECT_EQ(d_out, m_out) << "normal decrypt";
+    EXPECT_EQ(s_out, m_out) << "squash decrypt";
+    EXPECT_EQ(r_out, m_out) << "recrypt decrypt";
+}
+
+TEST_P(Circuits, Mul) {
+    auto param = GetParam();
+    FullyScheme fhe(param.first, 35, 35, param.second);
+    fhe.kappa = fhe.gamma * fhe.eta;
+    auto [secret_key, public_key] = fhe.key_gen();
+    mul_aux(fhe, public_key, secret_key, NTL::GF2{1}, NTL::GF2{1});
+    mul_aux(fhe, public_key, secret_key, NTL::GF2{1}, NTL::GF2{0});
+    mul_aux(fhe, public_key, secret_key, NTL::GF2{0}, NTL::GF2{1});
+    mul_aux(fhe, public_key, secret_key, NTL::GF2{0}, NTL::GF2{0});
+}
+
+TEST_P(Circuits, Add) {
+    auto param = GetParam();
+    FullyScheme fhe(param.first, 35, 35, param.second);
+    auto [secret_key, public_key] = fhe.key_gen();
+    add_aux(fhe, public_key, secret_key, NTL::GF2{1}, NTL::GF2{1});
+    add_aux(fhe, public_key, secret_key, NTL::GF2{1}, NTL::GF2{0});
+    add_aux(fhe, public_key, secret_key, NTL::GF2{0}, NTL::GF2{1});
+    add_aux(fhe, public_key, secret_key, NTL::GF2{0}, NTL::GF2{0});
+}
+
+TEST_P(Circuits, ArbitraryLongMulCircuit) {
+    auto param = GetParam();
+    FullyScheme fhe(param.first, 35, 35, param.second);
+    auto [secret_key, public_key] = fhe.key_gen();
+    auto m1 = NTL::GF2{1};
+    auto m2 = NTL::GF2{1};
+    auto c1 = fhe.encrypt(public_key.pk, m1);
+    auto c2 = fhe.encrypt(public_key.pk, m2);
+    auto c1_recrypted = fhe.recrypt(c1, public_key);
+    auto c2_recrypted = fhe.recrypt(c2, public_key);
+
+    for (int i = 0; i < 10; i++) {
+        auto m3 = m1 * m2;
+        auto c3 = c1_recrypted * c2_recrypted;
+
+        auto c3_d = fhe.decrypt(secret_key.p, c3);
+        auto [c_star, z] = fhe.post_process(c3, public_key.y);
+        auto c3_s_d = fhe.squashed_decrypt(c_star, secret_key.s, z);
+        ASSERT_EQ(c3_d, m3) << "normal decrypt";
+        ASSERT_EQ(c3_s_d, m3) << "squashed decrypt";
+        c1_recrypted = fhe.recrypt(c3, public_key);
+        c2_recrypted = fhe.recrypt(c2, public_key);
+    }
 }

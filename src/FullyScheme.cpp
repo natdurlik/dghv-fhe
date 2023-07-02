@@ -3,12 +3,22 @@
 
 FullyScheme::FullyScheme(int security, long rd_seed) : SomewhatScheme(security, rd_seed) {
     theta = lambda;
-//    kappa = gamma * eta / ro_prim;
-    kappa = gamma + 2;
-//    tau = 35; //fixme
+    kappa = gamma * eta;
+//    kappa = gamma + 2;
+    tau = 35; //fixme
     Theta = 35; // fixme
-    eta *= 40; // *= Theta
+    eta *= 100; // *= Theta
 //    Theta = 20;
+    n = std::ceil(log2(theta)) + 3;
+}
+
+FullyScheme::FullyScheme(int security, int Theta, int tau, long rd_seed) : SomewhatScheme(security,
+                                                                                          rd_seed) {
+    theta = lambda;
+    kappa = gamma * eta;
+    this->tau = tau;
+    this->Theta = Theta;
+    eta *= 100;
     n = std::ceil(log2(theta)) + 3;
 }
 
