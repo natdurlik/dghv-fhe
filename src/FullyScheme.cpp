@@ -112,7 +112,7 @@ mpz_class FullyScheme::encrypt(const std::vector<mpz_class> &pk, NTL::GF2 messag
 }
 
 std::pair<std::vector<NTL::GF2>, std::vector<std::vector<NTL::GF2>>>
-FullyScheme::post_process(const mpz_class &c, const std::vector<mpf_class> &y) {
+FullyScheme::post_process(const mpz_class &c, const std::vector<mpf_class> &y) const {
     std::vector<mpf_class> zf(y.size());
 
     for (int i = 0; i < zf.size(); i++) {
@@ -141,7 +141,3 @@ mpz_class FullyScheme::recrypt(const mpz_class &c, const PublicKey &public_key) 
     auto z_mpz = z_to_mpz(z_bits);
     return squashed_decrypt(c_star_mpz, public_key.e_sk, z_mpz);
 }
-
-
-//template std::vector<int> FullyScheme::hamming_weight<int>(std::vector<int> a);
-

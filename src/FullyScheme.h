@@ -21,7 +21,7 @@ public:
     mpz_class encrypt(const std::vector<mpz_class> &pk, NTL::GF2 message);
 
     std::pair<std::vector<NTL::GF2>, std::vector<std::vector<NTL::GF2>>>
-    post_process(const mpz_class &c, const std::vector<mpf_class> &y);
+    post_process(const mpz_class &c, const std::vector<mpf_class> &y) const;
 
     NTL::GF2 decrypt(const mpz_class &sk, const mpz_class &c);
 
