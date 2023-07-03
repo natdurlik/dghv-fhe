@@ -29,12 +29,11 @@ T circuit3(T m1, T m2, T m3, T m4, T m5, T m6) {
 class SomewhatSchemeCircuitsTest : public ::testing::TestWithParam<long> {
 };
 
+INSTANTIATE_TEST_SUITE_P(RandomSeeds, SomewhatSchemeCircuitsTest, ::testing::Values(0, 1, 2, 3, 4, 5));
+
 TEST_P(SomewhatSchemeCircuitsTest, AdditionZeroOne) {
     SomewhatScheme scheme(7, GetParam());
-
-    mpz_class sk;
-    std::vector<mpz_class> pk;
-    tie(sk, pk) = scheme.key_gen();
+    auto [sk, pk] = scheme.key_gen();
 
     auto m1 = NTL::GF2(0);
     auto m2 = NTL::GF2(1);
@@ -51,10 +50,7 @@ TEST_P(SomewhatSchemeCircuitsTest, AdditionZeroOne) {
 
 TEST_P(SomewhatSchemeCircuitsTest, AdditionOnes) {
     SomewhatScheme scheme(7, GetParam());
-
-    mpz_class sk;
-    std::vector<mpz_class> pk;
-    tie(sk, pk) = scheme.key_gen();
+    auto [sk, pk] = scheme.key_gen();
 
     auto m1 = NTL::GF2(1);
     auto m2 = NTL::GF2(1);
@@ -72,10 +68,7 @@ TEST_P(SomewhatSchemeCircuitsTest, AdditionOnes) {
 
 TEST_P(SomewhatSchemeCircuitsTest, MultiplicationOneZero) {
     SomewhatScheme scheme(7, GetParam());
-
-    mpz_class sk;
-    std::vector<mpz_class> pk;
-    tie(sk, pk) = scheme.key_gen();
+    auto [sk, pk] = scheme.key_gen();
 
     auto m1 = NTL::GF2(1);
     auto m2 = NTL::GF2(0);
@@ -92,10 +85,7 @@ TEST_P(SomewhatSchemeCircuitsTest, MultiplicationOneZero) {
 
 TEST_P(SomewhatSchemeCircuitsTest, MultiplicationOnes) {
     SomewhatScheme scheme(7, GetParam());
-
-    mpz_class sk;
-    std::vector<mpz_class> pk;
-    tie(sk, pk) = scheme.key_gen();
+    auto [sk, pk] = scheme.key_gen();
 
     auto m1 = NTL::GF2(1);
     auto m2 = NTL::GF2(1);
@@ -112,10 +102,7 @@ TEST_P(SomewhatSchemeCircuitsTest, MultiplicationOnes) {
 
 TEST_P(SomewhatSchemeCircuitsTest, Circuit1) {
     SomewhatScheme scheme(7, GetParam());
-
-    mpz_class sk;
-    std::vector<mpz_class> pk;
-    tie(sk, pk) = scheme.key_gen();
+    auto [sk, pk] = scheme.key_gen();
 
     auto m1 = NTL::GF2(1);
     auto m2 = NTL::GF2(1);
@@ -134,10 +121,7 @@ TEST_P(SomewhatSchemeCircuitsTest, Circuit1) {
 
 TEST_P(SomewhatSchemeCircuitsTest, Circuit2) {
     SomewhatScheme scheme(8, GetParam());
-
-    mpz_class sk;
-    std::vector<mpz_class> pk;
-    tie(sk, pk) = scheme.key_gen();
+    auto [sk, pk] = scheme.key_gen();
 
     auto m1 = NTL::GF2(1);
     auto m2 = NTL::GF2(1);
@@ -156,10 +140,7 @@ TEST_P(SomewhatSchemeCircuitsTest, Circuit2) {
 
 TEST_P(SomewhatSchemeCircuitsTest, Circuit3) {
     SomewhatScheme scheme(8, GetParam());
-
-    mpz_class sk;
-    std::vector<mpz_class> pk;
-    tie(sk, pk) = scheme.key_gen();
+    auto [sk, pk] = scheme.key_gen();
 
     auto m1 = NTL::GF2(1);
     auto m2 = NTL::GF2(0);
@@ -182,4 +163,59 @@ TEST_P(SomewhatSchemeCircuitsTest, Circuit3) {
     EXPECT_EQ(m_out, d_out);
 }
 
-INSTANTIATE_TEST_SUITE_P(RandomSeeds, SomewhatSchemeCircuitsTest, ::testing::Values(0, 1, 2, 3, 4, 5));
+class KeysAndCiphertextsRanges : public ::testing::TestWithParam<std::pair<int, long>> {
+};
+
+INSTANTIATE_TEST_SUITE_P(RandomSeeds, KeysAndCiphertextsRanges, ::testing::Values(
+        std::pair{6, 0},
+        std::pair{6, 1688384936},
+        std::pair{8, 0},
+        std::pair{8, 1},
+        std::pair{8, 1688384934},
+        std::pair{9, 123}
+));
+
+TEST_P(KeysAndCiphertextsRanges, SampleSecretKey) {
+    auto param = GetParam();
+    SomewhatScheme scheme(param.first, param.second);
+    mpz_class p = scheme.sample_secret_key();
+    mpz_class right = pow_of_two(scheme.eta);
+    mpz_class left = pow_of_two(scheme.eta - 1);
+
+    EXPECT_TRUE(p % 2 == 1);
+    EXPECT_TRUE(p < right);
+    EXPECT_TRUE(p >= left);
+}
+
+TEST_P(KeysAndCiphertextsRanges, SamplePublicKey) {
+    auto param = GetParam();
+    SomewhatScheme scheme(param.first, param.second);
+    mpz_class p = scheme.sample_secret_key();
+    auto x = scheme.sample_public_key(p);
+    mpz_class right = pow_of_two(scheme.gamma);
+    mpz_class left = -pow_of_two(scheme.ro);
+
+    EXPECT_EQ(x.size(), scheme.tau + 1);
+    for (const auto &i: x) {
+        EXPECT_TRUE(i < right);
+        EXPECT_TRUE(i > left);
+    }
+    int max_idx = x.begin() - std::max_element(x.begin(), x.end());
+    EXPECT_EQ(max_idx, 0);
+    EXPECT_TRUE(x[0] % 2 == 1);
+    EXPECT_TRUE(rem(x[0], p) % 2 == 0);
+}
+
+TEST_P(KeysAndCiphertextsRanges, Encrypt) {
+    auto param = GetParam();
+    SomewhatScheme scheme(param.first, param.second);
+    auto [secret_key, public_key] = scheme.key_gen();
+    auto m0 = NTL::GF2{0};
+    auto m1 = NTL::GF2{1};
+    auto c0 = scheme.encrypt(public_key, m0);
+    auto c1 = scheme.encrypt(public_key, m1);
+    mpz_class range = public_key[0];
+
+    EXPECT_TRUE(abs(c0) < range);
+    EXPECT_TRUE(abs(c1) < range);
+}
