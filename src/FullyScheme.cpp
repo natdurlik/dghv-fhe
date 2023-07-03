@@ -76,9 +76,7 @@ FullyScheme::encrypt_secret_key_bits(const std::vector<NTL::GF2> &s, const mpz_c
 }
 
 std::pair<SecretKey, PublicKey> FullyScheme::key_gen() {
-    mpz_class sk;
-    std::vector<mpz_class> pk;
-    tie(sk, pk) = SomewhatScheme::key_gen();
+    auto [sk, public_key] = SomewhatScheme::key_gen();
 
     std::vector<NTL::GF2> s(Theta, NTL::GF2{0});
     set_theta_bits_to_one(s);
@@ -99,16 +97,17 @@ std::pair<SecretKey, PublicKey> FullyScheme::key_gen() {
         y[i] /= two_to_kappa;
     }
 
-    std::vector<mpz_class> encrypted_sk = encrypt_secret_key_bits(s, sk, pk);
+    std::vector<mpz_class> encrypted_sk = encrypt_secret_key_bits(s, sk, public_key.pk);
 
     SecretKey secret_key{sk, s};
-    PublicKey public_key{pk, y, encrypted_sk};
+    public_key.y = y;
+    public_key.e_sk = encrypted_sk;
 
     return {secret_key, public_key};
 }
 
-mpz_class FullyScheme::encrypt(const std::vector<mpz_class> &pk, NTL::GF2 message) {
-    return SomewhatScheme::encrypt(pk, message);
+Ciphertext FullyScheme::encrypt(const PublicKey &public_key, NTL::GF2 message) {
+    return SomewhatScheme::encrypt(public_key, message);
 }
 
 std::pair<std::vector<NTL::GF2>, std::vector<std::vector<NTL::GF2>>>
@@ -135,9 +134,11 @@ NTL::GF2 FullyScheme::decrypt(const mpz_class &sk, const mpz_class &c) {
     return SomewhatScheme::decrypt(sk, c);
 }
 
-mpz_class FullyScheme::recrypt(const mpz_class &c, const PublicKey &public_key) {
+Ciphertext FullyScheme::recrypt(const Ciphertext &c, const PublicKey &public_key) {
     auto [c_star_bits, z_bits] = post_process(c, public_key.y);
     auto c_star_mpz = c_star_to_mpz(c_star_bits);
     auto z_mpz = z_to_mpz(z_bits);
-    return squashed_decrypt(c_star_mpz, public_key.e_sk, z_mpz);
+    auto squashed = squashed_decrypt(c_star_mpz, public_key.e_sk, z_mpz);
+
+    return {squashed, c.mod_red, c.threshold}; //fixme?
 }

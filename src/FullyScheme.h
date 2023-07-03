@@ -4,6 +4,7 @@
 #include "SomewhatScheme.h"
 #include "PublicKey.h"
 #include "SecretKey.h"
+#include "Ciphertext.h"
 
 class FullyScheme : public SomewhatScheme {
 public:
@@ -18,7 +19,7 @@ public:
 
     std::pair<SecretKey, PublicKey> key_gen();
 
-    mpz_class encrypt(const std::vector<mpz_class> &pk, NTL::GF2 message);
+    Ciphertext encrypt(const PublicKey &public_key, NTL::GF2 message);
 
     std::pair<std::vector<NTL::GF2>, std::vector<std::vector<NTL::GF2>>>
     post_process(const mpz_class &c, const std::vector<mpf_class> &y) const;
@@ -33,7 +34,7 @@ public:
     std::vector<mpz_class>
     encrypt_secret_key_bits(const std::vector<NTL::GF2> &s, const mpz_class &p, const std::vector<mpz_class> &pk);
 
-    mpz_class recrypt(const mpz_class &c, const PublicKey &public_key);
+    Ciphertext recrypt(const Ciphertext &c, const PublicKey &public_key);
 
     template<typename T>
     T squashed_decrypt(const std::vector<T> &c, const std::vector<T> &s, const std::vector<std::vector<T>> &z) {

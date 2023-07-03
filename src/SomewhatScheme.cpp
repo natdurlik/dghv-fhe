@@ -1,4 +1,6 @@
 #include "SomewhatScheme.h"
+#include "Ciphertext.h"
+#include "PublicKey.h"
 
 SomewhatScheme::SomewhatScheme(int security, long rd_seed) : rand(gmp_randinit_default) {
     lambda = security;
@@ -16,25 +18,30 @@ SomewhatScheme::SomewhatScheme(int lambda, int gamma, int eta, int ro, int ro_pr
     rand.seed(rd_seed);
 }
 
-std::pair<mpz_class, std::vector<mpz_class>> SomewhatScheme::key_gen() {
+std::pair<mpz_class, PublicKey> SomewhatScheme::key_gen() {
     mpz_class sk = sample_secret_key();
 
     std::vector<mpz_class> pk = sample_public_key(sk);
+    std::vector<mpz_class> mr = generate_modular_reduction(sk);
 
-    return {sk, pk};
+    PublicKey public_key;
+    public_key.pk = pk;
+    public_key.mod_red = std::make_shared<std::vector<mpz_class>>(mr);
+
+    return {sk, public_key};
 }
 
-mpz_class SomewhatScheme::encrypt(const std::vector<mpz_class> &pk, NTL::GF2 message) {
+Ciphertext SomewhatScheme::encrypt(const PublicKey &public_key, NTL::GF2 message) {
 
     mpz_class m = 0;
     if (NTL::IsOne(message)) m = 1;
 
     // random subset S
     std::vector<mpz_class> s;
-    for (int i = 1; i < pk.size(); i++) {
+    for (int i = 1; i < public_key.pk.size(); i++) {
         mpz_class take = rand.get_z_bits(1);
         if (take == 1) {
-            s.push_back(pk[i]);
+            s.push_back(public_key.pk[i]);
         }
     }
 
@@ -50,12 +57,14 @@ mpz_class SomewhatScheme::encrypt(const std::vector<mpz_class> &pk, NTL::GF2 mes
     for (const mpz_class &x: s) {
         c += (2 * x);
     }
-    c = rem(c, pk[0]);
+    c = rem(c, public_key.pk[0]);
 
-    return c;
+    Ciphertext ciphertext(c, public_key.mod_red, pow_of_two(gamma));
+    return ciphertext;
 }
 
-NTL::GF2 SomewhatScheme::decrypt(const mpz_class& sk, const mpz_class& c) {
+NTL::GF2 SomewhatScheme::decrypt(const mpz_class &sk, const mpz_class &c) {
+    // get ciphertext.c
     mpz_class m = rem(rem(c, sk), 2);
     if (m == 0) return NTL::GF2(0);
     return NTL::GF2(1);
@@ -73,7 +82,7 @@ mpz_class SomewhatScheme::sample_secret_key() {
 }
 
 
-std::vector<mpz_class> SomewhatScheme::sample_public_key(const mpz_class& p) {
+std::vector<mpz_class> SomewhatScheme::sample_public_key(const mpz_class &p) {
     mpz_class q_range = pow_of_two(gamma);
     q_range /= p;
 
@@ -94,7 +103,29 @@ std::vector<mpz_class> SomewhatScheme::sample_public_key(const mpz_class& p) {
     return x;
 }
 
-mpz_class SomewhatScheme::draw_from_distribution(const mpz_class& q_range, const mpz_class& r_range, const mpz_class& p) {
+std::vector<mpz_class> SomewhatScheme::generate_modular_reduction(const mpz_class &p) {
+    std::vector<mpz_class> x(gamma + 1);
+    mpz_class r_range = pow_of_two(ro);
+
+    for (int i = 0; i < x.size(); i++) {
+        mpz_class q_range = pow_of_two(gamma + i - 1);
+        mpz_class a = rand.get_z_bits(gamma + i - 1);
+        mpz_class q = (q_range + a) / p;
+
+        mpz_class r = rand.get_z_range(r_range - 1);
+        mpz_class neg = rand.get_z_bits(1);
+        if (neg == 0) {
+            r = -r;
+        }
+
+        x[i] = 2 * (q * p + r);
+    }
+
+    return x;
+}
+
+mpz_class
+SomewhatScheme::draw_from_distribution(const mpz_class &q_range, const mpz_class &r_range, const mpz_class &p) {
     mpz_class q = rand.get_z_range(q_range - 1);
     mpz_class r = rand.get_z_range(r_range - 1);
     mpz_class neg = rand.get_z_bits(1);

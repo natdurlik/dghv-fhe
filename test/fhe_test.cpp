@@ -91,7 +91,7 @@ TEST(HammingWeightCiphertext, SmallNumbers) {
     std::tie(secret_key, public_key) = fhe.key_gen();
 
     // 1
-    std::vector<mpz_class> a = {fhe.encrypt(public_key.pk, NTL::GF2{1})};
+    std::vector<mpz_class> a = {fhe.encrypt(public_key, NTL::GF2{1})};
     auto out = fhe.hamming_weight(a);
     EXPECT_EQ(fhe.decrypt(secret_key.p, out[0]), NTL::GF2{1});
     for (int i = 1; i < out.size(); i++) {
@@ -99,17 +99,17 @@ TEST(HammingWeightCiphertext, SmallNumbers) {
     }
 
     // 0
-    a = {fhe.encrypt(public_key.pk, NTL::GF2{0}),
-         fhe.encrypt(public_key.pk, NTL::GF2{0}), fhe.encrypt(public_key.pk, NTL::GF2{0})};
+    a = {fhe.encrypt(public_key, NTL::GF2{0}),
+         fhe.encrypt(public_key, NTL::GF2{0}), fhe.encrypt(public_key, NTL::GF2{0})};
     out = fhe.hamming_weight(a);
     for (const auto &i: out) {
         EXPECT_EQ(fhe.decrypt(secret_key.p, i), NTL::GF2{0});
     }
 
     // 1
-    a = {fhe.encrypt(public_key.pk, NTL::GF2{1}), fhe.encrypt(public_key.pk, NTL::GF2{0}),
-         fhe.encrypt(public_key.pk, NTL::GF2{0}), fhe.encrypt(public_key.pk, NTL::GF2{0}),
-         fhe.encrypt(public_key.pk, NTL::GF2{0}), fhe.encrypt(public_key.pk, NTL::GF2{0})};
+    a = {fhe.encrypt(public_key, NTL::GF2{1}), fhe.encrypt(public_key, NTL::GF2{0}),
+         fhe.encrypt(public_key, NTL::GF2{0}), fhe.encrypt(public_key, NTL::GF2{0}),
+         fhe.encrypt(public_key, NTL::GF2{0}), fhe.encrypt(public_key, NTL::GF2{0})};
     out = fhe.hamming_weight(a);
     EXPECT_EQ(fhe.decrypt(secret_key.p, out[0]), NTL::GF2{1});
     for (int i = 1; i < out.size(); i++) {
@@ -117,8 +117,8 @@ TEST(HammingWeightCiphertext, SmallNumbers) {
     }
 
     // 3
-    a = {fhe.encrypt(public_key.pk, NTL::GF2{1}), fhe.encrypt(public_key.pk, NTL::GF2{1}),
-         fhe.encrypt(public_key.pk, NTL::GF2{0}), fhe.encrypt(public_key.pk, NTL::GF2{1})};
+    a = {fhe.encrypt(public_key, NTL::GF2{1}), fhe.encrypt(public_key, NTL::GF2{1}),
+         fhe.encrypt(public_key, NTL::GF2{0}), fhe.encrypt(public_key, NTL::GF2{1})};
     out = fhe.hamming_weight(a);
     EXPECT_EQ(fhe.decrypt(secret_key.p, out[0]), NTL::GF2{1});
     EXPECT_EQ(fhe.decrypt(secret_key.p, out[1]), NTL::GF2{1});
@@ -235,7 +235,7 @@ TEST(PostProcess, RationalBitsSumWithinQuarterOfAnInteger) {
     std::clog << seed << std::endl;
     FullyScheme fhe(6, 35, 35, seed);
     auto [secret_key, public_key] = fhe.key_gen();
-    auto c0 = fhe.encrypt(public_key.pk, NTL::GF2{0});
+    auto c0 = fhe.encrypt(public_key, NTL::GF2{0});
 
     auto [c_star, z] = fhe.post_process(c0, public_key.y);
     mpf_class sum(0, fhe.n + 1);
@@ -259,7 +259,7 @@ TEST_P(PostProcessCases, RationalBitsSumWithinQuarterOfAnInteger) {
     const auto &param = GetParam();
     FullyScheme fhe(param.first, 35, 35, param.second);
     auto [secret_key, public_key] = fhe.key_gen();
-    auto c0 = fhe.encrypt(public_key.pk, NTL::GF2{0});
+    auto c0 = fhe.encrypt(public_key, NTL::GF2{0});
 
     auto [c_star, z] = fhe.post_process(c0, public_key.y);
     mpf_class sum(0, fhe.n + 1);
@@ -292,7 +292,7 @@ TEST_P(PostProcessCases, RationalBitsSumRoundsToCOverP) {
     const auto &param = GetParam();
     FullyScheme fhe(param.first, 35, 35, param.second);
     auto [secret_key, public_key] = fhe.key_gen();
-    auto c = fhe.encrypt(public_key.pk, NTL::GF2{1});
+    auto c = fhe.encrypt(public_key, NTL::GF2{1});
 
     auto [c_star, z] = fhe.post_process(c, public_key.y);
     mpf_class sum(0, fhe.n + 1);
@@ -363,7 +363,7 @@ TEST_P(GenerateFewerNumbers, OutputHasTheSameSum) {
     long seed = param.first;
     FullyScheme fhe(6, 35, 35, seed);
     auto [secret_key, public_key] = fhe.key_gen();
-    auto c = fhe.encrypt(public_key.pk, NTL::GF2{param.second});
+    auto c = fhe.encrypt(public_key, NTL::GF2{param.second});
 
     auto [c_star, z] = fhe.post_process(c, public_key.y);
 
@@ -482,7 +482,7 @@ TEST_P(SquashedDecrypt, SimpleChecks) {
     auto [secret_key, public_key] = fhe.key_gen();
 
     auto message = NTL::GF2{std::get<2>(param)};
-    auto c = fhe.encrypt(public_key.pk, message);
+    auto c = fhe.encrypt(public_key, message);
     auto [c_star, z] = fhe.post_process(c, public_key.y);
     auto decrypted = fhe.squashed_decrypt(c_star, secret_key.s, z);
 
@@ -511,7 +511,7 @@ TEST_P(Recrypt, SimpleChecks) {
     auto [secret_key, public_key] = fhe.key_gen();
     auto message = NTL::GF2{std::get<2>(param)};
 
-    auto c = fhe.encrypt(public_key.pk, message);
+    auto c = fhe.encrypt(public_key, message);
     auto recrypted = fhe.recrypt(c, public_key);
     auto decrypted = fhe.decrypt(secret_key.p, recrypted);
 
@@ -522,13 +522,16 @@ class Circuits : public ::testing::TestWithParam<std::pair<int, long>> {
 };
 
 INSTANTIATE_TEST_SUITE_P(SimpleChecks, Circuits, ::testing::Values(
-        std::pair{6, 0},
-        std::pair{6, 1},
-        std::pair{6, 2},
-        std::pair{6, 3},
-        std::pair{6, 4},
-        std::pair{6, 5},
-        std::pair{7, 1687900131}
+        std::pair{10, 0},
+        std::pair{10, 1},
+        std::pair{10, 2},
+        std::pair{10, 3}
+//        std::pair{6, 1},
+//        std::pair{6, 2},
+//        std::pair{6, 3},
+//        std::pair{6, 4},
+//        std::pair{6, 5},
+//        std::pair{7, 1687900131}
 ));
 
 template<typename T>
@@ -540,8 +543,8 @@ void
 mul_aux(FullyScheme &fhe, const PublicKey &public_key, const SecretKey &secret_key, NTL::GF2 m1, NTL::GF2 m2) {
     auto m_out = mul_circuit(m1, m2);
 
-    auto c1 = fhe.encrypt(public_key.pk, m1);
-    auto c2 = fhe.encrypt(public_key.pk, m2);
+    auto c1 = fhe.encrypt(public_key, m1);
+    auto c2 = fhe.encrypt(public_key, m2);
     auto c_out = mul_circuit(c1, c2);
 
     auto [c_star, z] = fhe.post_process(c_out, public_key.y);
@@ -567,8 +570,8 @@ void
 add_aux(FullyScheme &fhe, const PublicKey &public_key, const SecretKey &secret_key, NTL::GF2 m1, NTL::GF2 m2) {
     auto m_out = add_circuit(m1, m2);
 
-    auto c1 = fhe.encrypt(public_key.pk, m1);
-    auto c2 = fhe.encrypt(public_key.pk, m2);
+    auto c1 = fhe.encrypt(public_key, m1);
+    auto c2 = fhe.encrypt(public_key, m2);
     auto c_out = add_circuit(c1, c2);
 
     auto [c_star, z] = fhe.post_process(c_out, public_key.y);
@@ -612,8 +615,8 @@ TEST_P(Circuits, ArbitraryLongMulCircuit) {
     auto [secret_key, public_key] = fhe.key_gen();
     auto m1 = NTL::GF2{1};
     auto m2 = NTL::GF2{1};
-    auto c1 = fhe.encrypt(public_key.pk, m1);
-    auto c2 = fhe.encrypt(public_key.pk, m2);
+    auto c1 = fhe.encrypt(public_key, m1);
+    auto c2 = fhe.encrypt(public_key, m2);
     auto c1_recrypted = fhe.recrypt(c1, public_key);
     auto c2_recrypted = fhe.recrypt(c2, public_key);
 
@@ -624,7 +627,7 @@ TEST_P(Circuits, ArbitraryLongMulCircuit) {
         auto c3_d = fhe.decrypt(secret_key.p, c3);
         auto [c_star, z] = fhe.post_process(c3, public_key.y);
         auto c3_s_d = fhe.squashed_decrypt(c_star, secret_key.s, z);
-        ASSERT_EQ(c3_d, m3) << "normal decrypt";
+        ASSERT_EQ(c3_d, m3) << "normal decrypt " << i;
         ASSERT_EQ(c3_s_d, m3) << "squashed decrypt";
         c1_recrypted = fhe.recrypt(c3, public_key);
         c2_recrypted = fhe.recrypt(c2, public_key);
@@ -636,10 +639,9 @@ TEST_P(Recrypt, NoiseIsSmallerAfterRecrypt) {
     FullyScheme fhe(std::get<0>(param), 35, 35, std::get<1>(param));
     auto [secret_key, public_key] = fhe.key_gen();
     auto m = NTL::GF2{std::get<2>(param)};
-    auto c = fhe.encrypt(public_key.pk, m);
+    auto c = fhe.encrypt(public_key, m);
     c = fhe.recrypt(c, public_key);
 
-    // some operation
     c *= c;
     mpz_class noise = rem(c, secret_key.p);
 

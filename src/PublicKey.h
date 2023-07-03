@@ -2,12 +2,14 @@
 #define DGHV_FHE_PUBLICKEY_H
 
 #include <gmpxx.h>
+#include <memory>
 
 class PublicKey {
 public:
     std::vector<mpz_class> pk;
     std::vector<mpf_class> y;
     std::vector<mpz_class> e_sk;
+    std::shared_ptr<std::vector<mpz_class>> mod_red;
 };
 
 
