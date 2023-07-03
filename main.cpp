@@ -32,10 +32,7 @@ int main() {
 
         std::this_thread::sleep_for(std::chrono::seconds(2));
         long seed = time(nullptr);
-//        long seed = 1688292087;
-//        long seed = 1688293068;
-//    long seed = 1688293532;
-        FullyScheme fhe(8, seed);
+        FullyScheme fhe(6,35, 35, seed);
         auto [secret_key, public_key] = fhe.key_gen();
         cout << endl;
         cout << seed << endl;

@@ -4,29 +4,15 @@
 FullyScheme::FullyScheme(int security, long rd_seed) : SomewhatScheme(security, rd_seed) {
     theta = lambda;
     kappa = gamma * eta;
-//    kappa = gamma + 2;
-    tau = 35; //fixme
-    Theta = 35; // fixme
-    eta *= 100; // *= Theta
-//    Theta = 20;
+    Theta = kappa * log2(lambda);
+    eta *= Theta;
     n = std::ceil(log2(theta)) + 3;
 }
 
-FullyScheme::FullyScheme(int security, int Theta, int tau, long rd_seed) : SomewhatScheme(security,
-                                                                                          rd_seed) {
-    theta = lambda;
-    kappa = gamma * eta;
+FullyScheme::FullyScheme(int security, int Theta, int tau, long rd_seed) : FullyScheme(security, rd_seed) {
     this->tau = tau;
     this->Theta = Theta;
-    eta *= 100;
-    n = std::ceil(log2(theta)) + 3;
-}
-
-FullyScheme::FullyScheme(int security, int Theta, long rd_seed) : SomewhatScheme(security, rd_seed) {
-    theta = lambda;
-    kappa = gamma * eta / ro_prim;
-    this->Theta = Theta;
-    n = std::ceil(log2(theta)) + 3;
+    eta = lambda * lambda * Theta;
 }
 
 void FullyScheme::set_theta_bits_to_one(std::vector<NTL::GF2> &s) {

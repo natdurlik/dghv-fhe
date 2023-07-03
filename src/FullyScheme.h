@@ -14,8 +14,6 @@ public:
 
     FullyScheme(int security, long rd_seed);
 
-    FullyScheme(int security, int Theta, long rd_seed);
-
     FullyScheme(int security, int Theta, int tau, long rd_seed);
 
     std::pair<SecretKey, PublicKey> key_gen();

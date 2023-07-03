@@ -3,7 +3,7 @@
 #include "utils.h"
 
 TEST(HammingWeightBinary, AllZeros) {
-    FullyScheme fhe = FullyScheme(8, 0);
+    FullyScheme fhe(6, 35, 35, 0);
     std::vector<NTL::GF2> a = {NTL::GF2{0}};
     auto out = fhe.hamming_weight(a);
     for (auto x: out) {
@@ -25,7 +25,7 @@ TEST(HammingWeightBinary, AllZeros) {
 
 
 TEST(HammingWeightBinary, ZerosAndOne) {
-    FullyScheme fhe = FullyScheme(8, 0);
+    FullyScheme fhe(6, 35, 35, 0);
     std::vector<NTL::GF2> a = {NTL::GF2{1}};
     auto out = fhe.hamming_weight(a);
     EXPECT_EQ(out[0], NTL::GF2{1});
@@ -49,7 +49,7 @@ TEST(HammingWeightBinary, ZerosAndOne) {
 }
 
 TEST(HammingWeightBinary, SmallNumbers) {
-    FullyScheme fhe = FullyScheme(8, 0);
+    FullyScheme fhe(8, 35, 35, 0);
     std::vector<NTL::GF2> a = {NTL::GF2{1}, NTL::GF2{0}, NTL::GF2{1}, NTL::GF2{1}};
     auto out = fhe.hamming_weight(a);
     // 3 in binary
@@ -83,10 +83,9 @@ TEST(HammingWeightBinary, SmallNumbers) {
 
 TEST(HammingWeightCiphertext, SmallNumbers) {
 //    long seed = time(nullptr);
-    long seed = 1687810596; // fixme
-    // 1687810596 fast seed
-    std::cerr << "with seed = " << seed << std::endl;
-    FullyScheme fhe = FullyScheme(8, seed);
+    long seed = 1687810596;
+//    std::cerr << "with seed = " << seed << std::endl;
+    FullyScheme fhe = FullyScheme(6, 35, 35, seed);
     SecretKey secret_key;
     PublicKey public_key;
     std::tie(secret_key, public_key) = fhe.key_gen();
@@ -129,7 +128,7 @@ TEST(HammingWeightCiphertext, SmallNumbers) {
 }
 
 TEST(SetthetaBitsToOne, SimpleCheck) {
-    FullyScheme fhe(8, 0);
+    FullyScheme fhe(6, 35, 35, 0);
     std::vector<NTL::GF2> s(fhe.Theta, NTL::GF2{0});
     fhe.set_theta_bits_to_one(s);
     unsigned long weight = 0;
@@ -142,7 +141,7 @@ TEST(SetthetaBitsToOne, SimpleCheck) {
 }
 
 TEST(FillWithSumToValue, SimpleCheck) {
-    FullyScheme fhe(8, 0);
+    FullyScheme fhe(6, 35, 35, 0);
 
     int Theta = 100;
     std::vector<NTL::GF2> s(Theta, NTL::GF2{0});
@@ -168,8 +167,22 @@ TEST(FillWithSumToValue, SimpleCheck) {
     EXPECT_EQ(sum, sum_to);
 }
 
-TEST(KeyGen, PublicKeyHoldsProperEncryptionOfSecretKey) {
-    FullyScheme fhe(8, 0);
+class KeyGen : public ::testing::TestWithParam<std::pair<int, long>> {
+};
+
+INSTANTIATE_TEST_SUITE_P(SchemeParameters, KeyGen, ::testing::Values(
+        std::pair{6, 0},
+        std::pair{6, 1},
+        std::pair{6, 3},
+        std::pair{6, 4},
+        std::pair{7, 0},
+        std::pair{7, 1},
+        std::pair{8, 2}
+));
+
+TEST_P(KeyGen, PublicKeyHoldsProperEncryptionOfSecretKey) {
+    auto param = GetParam();
+    FullyScheme fhe(param.first, 35, 35, param.second);
     SecretKey secret_key;
     PublicKey public_key;
     std::tie(secret_key, public_key) = fhe.key_gen();
@@ -180,8 +193,9 @@ TEST(KeyGen, PublicKeyHoldsProperEncryptionOfSecretKey) {
     }
 }
 
-TEST(KeyGen, PublicKeyYsInCorrectRange) {
-    FullyScheme fhe = FullyScheme(8, 0);
+TEST_P(KeyGen, PublicKeyYsInCorrectRange) {
+    auto param = GetParam();
+    FullyScheme fhe = FullyScheme(param.first, 35, 35, param.second);
     SecretKey secret_key;
     PublicKey public_key;
     std::tie(secret_key, public_key) = fhe.key_gen();
@@ -194,11 +208,10 @@ TEST(KeyGen, PublicKeyYsInCorrectRange) {
     }
 }
 
-
-TEST(KeyGen, PublicKeySumsToOneOverP) {
-    long seed = time(nullptr);
-    std::clog << seed << std::endl;
-    FullyScheme fhe(8, seed); // fixme
+TEST_P(KeyGen, PublicKeySumsToOneOverP) {
+    auto param = GetParam();
+    long seed = param.second;
+    FullyScheme fhe(param.first, 35, 35, seed);
     auto [secret_key, public_key] = fhe.key_gen();
 
     mpf_class sum(0, fhe.kappa + 2);
@@ -220,7 +233,7 @@ TEST(KeyGen, PublicKeySumsToOneOverP) {
 TEST(PostProcess, RationalBitsSumWithinQuarterOfAnInteger) {
     long seed = time(nullptr);
     std::clog << seed << std::endl;
-    FullyScheme fhe(8, seed);
+    FullyScheme fhe(6, 35, 35, seed);
     auto [secret_key, public_key] = fhe.key_gen();
     auto c0 = fhe.encrypt(public_key.pk, NTL::GF2{0});
 
@@ -244,7 +257,7 @@ class PostProcessCases : public ::testing::TestWithParam<std::pair<int, long>> {
 
 TEST_P(PostProcessCases, RationalBitsSumWithinQuarterOfAnInteger) {
     const auto &param = GetParam();
-    FullyScheme fhe(param.first, param.second);
+    FullyScheme fhe(param.first, 35, 35, param.second);
     auto [secret_key, public_key] = fhe.key_gen();
     auto c0 = fhe.encrypt(public_key.pk, NTL::GF2{0});
 
@@ -266,18 +279,18 @@ TEST_P(PostProcessCases, RationalBitsSumWithinQuarterOfAnInteger) {
 
 
 INSTANTIATE_TEST_SUITE_P(SchemeParameters, PostProcessCases, ::testing::Values(
-        std::pair{8, 0},
-        std::pair{8, 1},
-        std::pair{8, 3},
-        std::pair{8, 4},
-        std::pair{9, 0},
-        std::pair{9, 1},
-        std::pair{9, 2}
+        std::pair{6, 0},
+        std::pair{6, 1},
+        std::pair{6, 3},
+        std::pair{6, 4},
+        std::pair{7, 0},
+        std::pair{7, 1},
+        std::pair{8, 2}
 ));
 
 TEST_P(PostProcessCases, RationalBitsSumRoundsToCOverP) {
     const auto &param = GetParam();
-    FullyScheme fhe(param.first, param.second);
+    FullyScheme fhe(param.first, 35, 35, param.second);
     auto [secret_key, public_key] = fhe.key_gen();
     auto c = fhe.encrypt(public_key.pk, NTL::GF2{1});
 
@@ -312,7 +325,7 @@ TEST(ShiftAndMod2, SimpleChecks) {
             {NTL::GF2{0}, NTL::GF2{1}, NTL::GF2{1}, NTL::GF2{0}},
     };
 
-    FullyScheme fhe(8, 0);
+    FullyScheme fhe(8, 35, 35, 0);
     auto out = fhe.shift_and_mod2(W, 7);
     std::vector<std::vector<NTL::GF2>> w{
             {NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{0}},
@@ -346,9 +359,9 @@ INSTANTIATE_TEST_SUITE_P(SchemeParameters, GenerateFewerNumbers, ::testing::Valu
 ));
 
 TEST_P(GenerateFewerNumbers, OutputHasTheSameSum) {
-    const auto &param = GetParam();
+    auto param = GetParam();
     long seed = param.first;
-    FullyScheme fhe(8, seed);
+    FullyScheme fhe(6, 35, 35, seed);
     auto [secret_key, public_key] = fhe.key_gen();
     auto c = fhe.encrypt(public_key.pk, NTL::GF2{param.second});
 
@@ -385,7 +398,7 @@ TEST_P(GenerateFewerNumbers, OutputHasTheSameSum) {
 }
 
 TEST(CarrySaveAdderMod2, SimpleChecks) {
-    FullyScheme fhe(8, 0);
+    FullyScheme fhe(6, 35, 35, 0);
 
     std::vector<NTL::GF2> a{NTL::GF2{1}, NTL::GF2{0}, NTL::GF2{1}, NTL::GF2{0}, NTL::GF2{0}, NTL::GF2{1}};
     std::vector<NTL::GF2> b{NTL::GF2{1}, NTL::GF2{1}, NTL::GF2{1}, NTL::GF2{0}, NTL::GF2{1}, NTL::GF2{0}};
@@ -407,7 +420,7 @@ TEST(CarrySaveAdderMod2, SimpleChecks) {
 }
 
 TEST(KForTwo, ProducesValidSumMod2) {
-    FullyScheme fhe(8, 0);
+    FullyScheme fhe(6, 35, 35, 0);
     int prec = 100;
     std::vector<mpf_class> rationals{mpf_class(0.125, prec), mpf_class(1.875, prec), mpf_class(1.5, prec),
                                      mpf_class(0.25, prec), mpf_class(0.6875, prec), mpf_class(1.4375, prec)};
@@ -429,7 +442,7 @@ TEST(KForTwo, ProducesValidSumMod2) {
 }
 
 TEST(OrT, SimpleCheck) {
-    FullyScheme fhe(8, 0);
+    FullyScheme fhe(6, 35, 35, 0);
     NTL::GF2 a{0};
     NTL::GF2 b{0};
     EXPECT_EQ(fhe.or_t(a, b), NTL::GF2{0});
@@ -451,21 +464,21 @@ class SquashedDecrypt : public ::testing::TestWithParam<std::tuple<int, long, in
 };
 
 INSTANTIATE_TEST_SUITE_P(SimpleChecks, SquashedDecrypt, ::testing::Values(
-        std::tuple{8, 0, 0},
-        std::tuple{8, 0, 1},
-        std::tuple{8, 2, 1},
-        std::tuple{8, 2, 0},
-        std::tuple{8, 3, 0},
-        std::tuple{8, 3, 1},
+        std::tuple{6, 0, 0},
+        std::tuple{6, 0, 1},
+        std::tuple{6, 2, 1},
+        std::tuple{6, 2, 0},
+        std::tuple{6, 3, 0},
+        std::tuple{6, 3, 1},
         std::tuple{8, 1687899700, 1},
         std::tuple{8, 1687899700, 0},
-        std::tuple{9, 1687899613, 0},
-        std::tuple{9, 1687899613, 1}
+        std::tuple{6, 1687899613, 0},
+        std::tuple{6, 1687899613, 1}
 ));
 
 TEST_P(SquashedDecrypt, SimpleChecks) {
     auto param = GetParam();
-    FullyScheme fhe(std::get<0>(param), std::get<1>(param));
+    FullyScheme fhe(std::get<0>(param), 35, 35, std::get<1>(param));
     auto [secret_key, public_key] = fhe.key_gen();
 
     auto message = NTL::GF2{std::get<2>(param)};
@@ -480,17 +493,21 @@ class Recrypt : public ::testing::TestWithParam<std::tuple<int, long, int>> {
 };
 
 INSTANTIATE_TEST_SUITE_P(SimpleChecks, Recrypt, ::testing::Values(
-        std::tuple{8, 0, 0},
-        std::tuple{8, 0, 1},
-        std::tuple{8, 1687899700, 1},
-        std::tuple{8, 1687899700, 0},
-        std::tuple{9, 1687899613, 0},
-        std::tuple{9, 1687899613, 1}
+        std::tuple{6, 0, 0},
+        std::tuple{6, 0, 1},
+        std::tuple{6, 1, 1},
+        std::tuple{6, 1, 0},
+        std::tuple{6, 2, 0},
+        std::tuple{6, 2, 1},
+        std::tuple{6, 1687899700, 1},
+        std::tuple{6, 1687899700, 0},
+        std::tuple{6, 1687899613, 0},
+        std::tuple{6, 1687899613, 1}
 ));
 
 TEST_P(Recrypt, SimpleChecks) {
     auto param = GetParam();
-    FullyScheme fhe(std::get<0>(param), std::get<1>(param));
+    FullyScheme fhe(std::get<0>(param), 35, 35, std::get<1>(param));
     auto [secret_key, public_key] = fhe.key_gen();
     auto message = NTL::GF2{std::get<2>(param)};
 
@@ -505,13 +522,13 @@ class Circuits : public ::testing::TestWithParam<std::pair<int, long>> {
 };
 
 INSTANTIATE_TEST_SUITE_P(SimpleChecks, Circuits, ::testing::Values(
-        std::pair{8, 0},
-        std::pair{8, 1},
-        std::pair{8, 2},
-        std::pair{8, 3},
-        std::pair{8, 4},
-        std::pair{8, 5},
-        std::pair{8, 1687900131}
+        std::pair{6, 0},
+        std::pair{6, 1},
+        std::pair{6, 2},
+        std::pair{6, 3},
+        std::pair{6, 4},
+        std::pair{6, 5},
+        std::pair{7, 1687900131}
 ));
 
 template<typename T>
@@ -571,7 +588,7 @@ add_aux(FullyScheme &fhe, const PublicKey &public_key, const SecretKey &secret_k
 TEST_P(Circuits, Mul) {
     auto param = GetParam();
     FullyScheme fhe(param.first, 35, 35, param.second);
-    fhe.kappa = fhe.gamma * fhe.eta;
+//    fhe.kappa = fhe.gamma * fhe.eta;
     auto [secret_key, public_key] = fhe.key_gen();
     mul_aux(fhe, public_key, secret_key, NTL::GF2{1}, NTL::GF2{1});
     mul_aux(fhe, public_key, secret_key, NTL::GF2{1}, NTL::GF2{0});
@@ -600,7 +617,7 @@ TEST_P(Circuits, ArbitraryLongMulCircuit) {
     auto c1_recrypted = fhe.recrypt(c1, public_key);
     auto c2_recrypted = fhe.recrypt(c2, public_key);
 
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 20; i++) {
         auto m3 = m1 * m2;
         auto c3 = c1_recrypted * c2_recrypted;
 
@@ -612,4 +629,22 @@ TEST_P(Circuits, ArbitraryLongMulCircuit) {
         c1_recrypted = fhe.recrypt(c3, public_key);
         c2_recrypted = fhe.recrypt(c2, public_key);
     }
+}
+
+TEST_P(Recrypt, NoiseIsSmallerAfterRecrypt) {
+    auto param = GetParam();
+    FullyScheme fhe(std::get<0>(param), 35, 35, std::get<1>(param));
+    auto [secret_key, public_key] = fhe.key_gen();
+    auto m = NTL::GF2{std::get<2>(param)};
+    auto c = fhe.encrypt(public_key.pk, m);
+    c = fhe.recrypt(c, public_key);
+
+    // some operation
+    c *= c;
+    mpz_class noise = rem(c, secret_key.p);
+
+    c = fhe.recrypt(c, public_key);
+    mpz_class noise_recrypted = rem(c, secret_key.p);
+
+    EXPECT_TRUE(abs(noise) > abs(noise_recrypted));
 }
