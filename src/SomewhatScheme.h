@@ -32,8 +32,6 @@ public:
     mpz_class sample_secret_key();
 
     mpz_class draw_from_distribution(const mpz_class& q_range, const mpz_class& r_range, const mpz_class& p);
-
-    double log2(int x);
 };
 
 

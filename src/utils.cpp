@@ -26,11 +26,11 @@ mpz_class quot(mpz_class z, mpz_class p) {
     return z / p;
 }
 
-mpz_class rem(const mpz_class& z, const mpz_class& p) {
+mpz_class rem(const mpz_class &z, const mpz_class &p) {
     return z - quot(z, p) * p;
 }
 
-bool is_even(const mpz_class& x) {
+bool is_even(const mpz_class &x) {
     return rem(x, 2) == 0;
 }
 
@@ -141,4 +141,8 @@ std::vector<std::vector<mpz_class>> z_to_mpz(const std::vector<std::vector<NTL::
         v[i] = c_star_to_mpz(bits[i]);
     }
     return v;
+}
+
+double log2(int x) {
+    return std::log(x) / std::log(2);
 }

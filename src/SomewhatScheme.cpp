@@ -55,7 +55,7 @@ mpz_class SomewhatScheme::encrypt(const std::vector<mpz_class> &pk, NTL::GF2 mes
     return c;
 }
 
-NTL::GF2 SomewhatScheme::decrypt(const mpz_class& sk, const mpz_class& c) {
+NTL::GF2 SomewhatScheme::decrypt(const mpz_class &sk, const mpz_class &c) {
     mpz_class m = rem(rem(c, sk), 2);
     if (m == 0) return NTL::GF2(0);
     return NTL::GF2(1);
@@ -73,7 +73,7 @@ mpz_class SomewhatScheme::sample_secret_key() {
 }
 
 
-std::vector<mpz_class> SomewhatScheme::sample_public_key(const mpz_class& p) {
+std::vector<mpz_class> SomewhatScheme::sample_public_key(const mpz_class &p) {
     mpz_class q_range = pow_of_two(gamma);
     q_range /= p;
 
@@ -94,7 +94,8 @@ std::vector<mpz_class> SomewhatScheme::sample_public_key(const mpz_class& p) {
     return x;
 }
 
-mpz_class SomewhatScheme::draw_from_distribution(const mpz_class& q_range, const mpz_class& r_range, const mpz_class& p) {
+mpz_class
+SomewhatScheme::draw_from_distribution(const mpz_class &q_range, const mpz_class &r_range, const mpz_class &p) {
     mpz_class q = rand.get_z_range(q_range - 1);
     mpz_class r = rand.get_z_range(r_range - 1);
     mpz_class neg = rand.get_z_bits(1);
@@ -103,9 +104,4 @@ mpz_class SomewhatScheme::draw_from_distribution(const mpz_class& q_range, const
     }
     return p * q + r;
 }
-
-double SomewhatScheme::log2(int x) {
-    return std::log(x) / std::log(2);
-}
-
 
