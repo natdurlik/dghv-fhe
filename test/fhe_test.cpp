@@ -522,16 +522,16 @@ class Circuits : public ::testing::TestWithParam<std::pair<int, long>> {
 };
 
 INSTANTIATE_TEST_SUITE_P(SimpleChecks, Circuits, ::testing::Values(
-        std::pair{10, 0},
-        std::pair{10, 1},
-        std::pair{10, 2},
-        std::pair{10, 3}
-//        std::pair{6, 1},
-//        std::pair{6, 2},
-//        std::pair{6, 3},
-//        std::pair{6, 4},
-//        std::pair{6, 5},
-//        std::pair{7, 1687900131}
+        std::pair{6, 1},
+        std::pair{6, 2},
+        std::pair{6, 3},
+        std::pair{6, 4},
+        std::pair{6, 5},
+        std::pair{6, 6},
+        std::pair{6, 7},
+        std::pair{6, 14},
+        std::pair{6, 15},
+        std::pair{7, 1687900131}
 ));
 
 template<typename T>
@@ -561,18 +561,13 @@ mul_aux(FullyScheme &fhe, const PublicKey &public_key, const SecretKey &secret_k
     EXPECT_EQ(r_out, m_out) << "recrypt decrypt";
 }
 
-template<typename T>
-T add_circuit(T m1, T m2) {
-    return m1 + m2;
-}
-
 void
 add_aux(FullyScheme &fhe, const PublicKey &public_key, const SecretKey &secret_key, NTL::GF2 m1, NTL::GF2 m2) {
-    auto m_out = add_circuit(m1, m2);
+    auto m_out = m1 + m2;
 
     auto c1 = fhe.encrypt(public_key, m1);
     auto c2 = fhe.encrypt(public_key, m2);
-    auto c_out = add_circuit(c1, c2);
+    auto c_out = c1 + c2;
 
     auto [c_star, z] = fhe.post_process(c_out, public_key.y);
     auto d_out = fhe.decrypt(secret_key.p, c_out);
@@ -629,10 +624,33 @@ TEST_P(Circuits, ArbitraryLongMulCircuit) {
         auto c3_s_d = fhe.squashed_decrypt(c_star, secret_key.s, z);
         ASSERT_EQ(c3_d, m3) << "normal decrypt " << i;
         ASSERT_EQ(c3_s_d, m3) << "squashed decrypt";
+        m1 = m3;
         c1_recrypted = fhe.recrypt(c3, public_key);
         c2_recrypted = fhe.recrypt(c2, public_key);
     }
 }
+
+//TEST(BiggerParams, SecondCOnstructor) {
+//    FullyScheme fhe(6, 0);
+//    auto [secret_key, public_key] = fhe.key_gen();
+//
+//    std::cout << "key_gen" << std::endl;
+//    auto m1 = NTL::GF2{1};
+//    auto m2 = NTL::GF2{1};
+//    auto c1 = fhe.encrypt(public_key, m1);
+//    auto c2 = fhe.encrypt(public_key, m2);
+////    auto c1_recrypted = fhe.recrypt(c1, public_key);
+////    auto c2_recrypted = fhe.recrypt(c2, public_key);
+//
+//    auto m3 = m1 * m2 + m1;
+//    auto c3 = c1 * c2 + c1;
+//
+//    auto c3_d = fhe.decrypt(secret_key.p, c3);
+////    auto [c_star, z] = fhe.post_process(c3, public_key.y);
+////    auto c3_s_d = fhe.squashed_decrypt(c_star, secret_key.s, z);
+//    ASSERT_EQ(c3_d, m3) << "normal decrypt ";
+////    ASSERT_EQ(c3_s_d, m3) << "squashed decrypt";
+//}
 
 TEST_P(Recrypt, NoiseIsSmallerAfterRecrypt) {
     auto param = GetParam();

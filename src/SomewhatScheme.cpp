@@ -7,7 +7,7 @@ SomewhatScheme::SomewhatScheme(int security, long rd_seed) : rand(gmp_randinit_d
     ro = lambda;
     ro_prim = 2 * lambda;
     gamma = lambda * lambda * lambda * lambda * lambda;
-    eta = lambda * lambda;
+    eta = lambda * lambda * log2(lambda);
     tau = gamma + lambda;
 
     rand.seed(rd_seed);
@@ -22,11 +22,14 @@ std::pair<mpz_class, PublicKey> SomewhatScheme::key_gen() {
     mpz_class sk = sample_secret_key();
 
     std::vector<mpz_class> pk = sample_public_key(sk);
-    std::vector<mpz_class> mr = generate_modular_reduction(sk);
 
     PublicKey public_key;
     public_key.pk = pk;
-    public_key.mod_red = std::make_shared<std::vector<mpz_class>>(mr);
+
+    mpz_class q_range = pow_of_two(gamma);
+    q_range /= sk;
+    mpz_class q = rand.get_z_range(q_range - 1);
+    public_key.mod_red = sk * q;
 
     return {sk, public_key};
 }
@@ -59,7 +62,7 @@ Ciphertext SomewhatScheme::encrypt(const PublicKey &public_key, NTL::GF2 message
     }
     c = rem(c, public_key.pk[0]);
 
-    Ciphertext ciphertext(c, public_key.mod_red, pow_of_two(gamma));
+    Ciphertext ciphertext(c, public_key.mod_red);
     return ciphertext;
 }
 
@@ -98,27 +101,6 @@ std::vector<mpz_class> SomewhatScheme::sample_public_key(const mpz_class &p) {
 
         unsigned long max_idx = distance(x.begin(), std::max_element(x.begin(), x.end()));
         swap(x[0], x[max_idx]);
-    }
-
-    return x;
-}
-
-std::vector<mpz_class> SomewhatScheme::generate_modular_reduction(const mpz_class &p) {
-    std::vector<mpz_class> x(gamma + 1);
-    mpz_class r_range = pow_of_two(ro);
-
-    for (int i = 0; i < x.size(); i++) {
-        mpz_class q_range = pow_of_two(gamma + i - 1);
-        mpz_class a = rand.get_z_bits(gamma + i - 1);
-        mpz_class q = (q_range + a) / p;
-
-        mpz_class r = rand.get_z_range(r_range - 1);
-        mpz_class neg = rand.get_z_bits(1);
-        if (neg == 0) {
-            r = -r;
-        }
-
-        x[i] = 2 * (q * p + r);
     }
 
     return x;

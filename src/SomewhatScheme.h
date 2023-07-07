@@ -33,8 +33,6 @@ public:
 
     mpz_class sample_secret_key();
 
-    std::vector<mpz_class> generate_modular_reduction(const mpz_class& p);
-
     mpz_class draw_from_distribution(const mpz_class& q_range, const mpz_class& r_range, const mpz_class& p);
 
     double log2(int x);

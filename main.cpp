@@ -29,38 +29,58 @@ get_squashed_decrypt(FullyScheme &fhe, const mpz_class &c, const SecretKey &secr
 
 int main() {
     int counter = 0;
-    for (int i = 0; i < 50; i++) {
+    for (int i = 0; i < 20; i++) {
         this_thread::sleep_for(std::chrono::seconds(2));
         long seed = time(nullptr);
         cout << seed << endl;
-        SomewhatScheme scheme(9, seed);
-        auto [p, public_key] = scheme.key_gen();
-        mpf_class pf(p);
-
-        auto m0 = NTL::GF2{1};
-        auto m1 = NTL::GF2{1};
-
-        auto c0 = scheme.encrypt(public_key, m0);
-        auto c1 = scheme.encrypt(public_key, m1);
-        auto noise_before = rem(c1, p);
-        mpf_class noise_before_f(noise_before);
-
-        auto c2 = c1 * c0 * c1;
-        auto noise = rem(c2, p);
-        mpf_class c2f(c2);
-        mpf_class tf(c2.threshold);
-        mpf_class noisef(noise);
-
-        std::cout << "p = " << pf << std::endl;
-        std::cout << "threshold = " << tf << std::endl;
-        std::cout << "c2 = " << c2f << std::endl;
-        std::cout << "noise = " << noisef << std::endl;
-        std::cout << "noise before = " << noise_before_f << std::endl;
-        auto d_c2 = scheme.decrypt(p, c2);
-        if (d_c2 != m0 * m1 * m1 || abs(c2) > c2.threshold) {
+        FullyScheme fhe(6, 35, 35, seed);
+        auto [secret_key, public_key] = fhe.key_gen();
+        auto m = NTL::GF2{1};
+        auto c = fhe.encrypt(public_key, m);
+        cout << "c mod2 = " << (c % 2) << endl;
+        if (c % 2 == 1 || c % 2 == -1) counter++;
+        c = fhe.recrypt(c, public_key);
+        cout << "recrypted mod2 = " << (c % 2) << endl;
+        auto out = get_squashed_decrypt(fhe, c, secret_key, public_key);
+        if(out!=m) {
             cout << "------------------- FALSE -------------------" << endl;
-            counter++;
         }
+
+//        SomewhatScheme scheme(8, seed);
+////        cout << "gamma = " << scheme.gamma << endl;
+////        cout << "eta = " << scheme.eta << endl;
+////        cout << "ro = " << scheme.ro << endl;
+////        cout << "tau = " << scheme.tau << endl;
+//        auto [p, public_key] = scheme.key_gen();
+//        mpf_class pf(p);
+//
+//        auto m0 = NTL::GF2{1};
+//        auto m1 = NTL::GF2{1};
+//
+//        auto c0 = scheme.encrypt(public_key, m0);
+//        auto c1 = scheme.encrypt(public_key, m1);
+//        auto noise_before = rem(c1, p);
+//        mpf_class noise_before_f(noise_before);
+//
+//        auto c2 = c1 * c0 * c1;
+//        auto noise = rem(c2, p);
+//        mpf_class c2f(c2);
+//        mpf_class tf(c2.threshold);
+//        mpf_class noisef(noise);
+//
+//        std::cout << "p = " << pf << std::endl;
+//        std::cout << "threshold = " << tf << std::endl;
+//        std::cout << "c2 = " << c2f << std::endl;
+//        std::cout << "noise = " << noisef << std::endl;
+//        std::cout << "noise before = " << noise_before_f << std::endl;
+//        auto d_c2 = scheme.decrypt(p, c2);
+//        if (d_c2 != m0 * m1 * m1) {
+//            cout << "------------------- FALSE -------------------" << endl;
+//            counter++;
+//        }
+//        if (abs(c2) > c2.threshold) {
+//            cout << "------------------- THRESHHOLD -------------------" << endl;
+//        }
     }
     cout << counter << endl;
 //    cout << c1.mod_red->size() << endl;

@@ -8,11 +8,9 @@ class Ciphertext : public mpz_class {
 public:
     using mpz_class::mpz_class;
 
-    std::shared_ptr<std::vector<mpz_class>> mod_red;
+    mpz_class mod_red;
 
-    mpz_class threshold;
-
-    Ciphertext(const mpz_class &c, std::shared_ptr<std::vector<mpz_class>> reduction, const mpz_class &t);
+    Ciphertext(const mpz_class &c, const mpz_class &reduction);
 
     Ciphertext &operator+=(const Ciphertext &other);
 

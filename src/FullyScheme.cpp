@@ -3,7 +3,7 @@
 
 FullyScheme::FullyScheme(int security, long rd_seed) : SomewhatScheme(security, rd_seed) {
     theta = lambda;
-    kappa = gamma * eta;
+    kappa = gamma + 2;
     Theta = kappa * log2(lambda);
     eta *= Theta;
     n = std::ceil(log2(theta)) + 3;
@@ -140,5 +140,5 @@ Ciphertext FullyScheme::recrypt(const Ciphertext &c, const PublicKey &public_key
     auto z_mpz = z_to_mpz(z_bits);
     auto squashed = squashed_decrypt(c_star_mpz, public_key.e_sk, z_mpz);
 
-    return {squashed, c.mod_red, c.threshold}; //fixme?
+    return {squashed, c.mod_red};
 }
