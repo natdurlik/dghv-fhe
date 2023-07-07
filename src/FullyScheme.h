@@ -132,7 +132,7 @@ public:
 
         // w_j=(2^{-j}W_{-j}) shift 2^{-j} and mod2
         // w_j = w0.w1w2...
-        std::vector<std::vector<T>> w = shift_and_mod2(W, n + 1); // fixme less than n bits of precision?
+        std::vector<std::vector<T>> w = shift_and_mod2(W, n + 1);
 
         return w;
     }

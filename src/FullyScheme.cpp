@@ -55,7 +55,6 @@ FullyScheme::encrypt_secret_key_bits(const std::vector<NTL::GF2> &s, const mpz_c
                                      const std::vector<mpz_class> &pk) {
     std::vector<mpz_class> encrypted_s(s.size());
 
-    // fixme ?
     mpz_class q_range = pow_of_two(gamma);
     q_range /= p;
 
@@ -116,7 +115,7 @@ FullyScheme::post_process(const mpz_class &c, const std::vector<mpf_class> &y) c
 
     for (int i = 0; i < zf.size(); i++) {
         zf[i].set_prec(n + 1);
-        zf[i] = mod2f(y[i] * c); // fixme?
+        zf[i] = mod2f(y[i] * c);
     }
 
     // z to bits

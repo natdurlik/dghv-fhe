@@ -26,4 +26,6 @@ std::vector<mpz_class> c_star_to_mpz(const std::vector<NTL::GF2> &bits);
 
 std::vector<std::vector<mpz_class>> z_to_mpz(const std::vector<std::vector<NTL::GF2>> &bits);
 
+double log2(int x);
+
 #endif //DGHV_FHE_UTILS_H

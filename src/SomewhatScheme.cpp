@@ -67,7 +67,6 @@ Ciphertext SomewhatScheme::encrypt(const PublicKey &public_key, NTL::GF2 message
 }
 
 NTL::GF2 SomewhatScheme::decrypt(const mpz_class &sk, const mpz_class &c) {
-    // get ciphertext.c
     mpz_class m = rem(rem(c, sk), 2);
     if (m == 0) return NTL::GF2(0);
     return NTL::GF2(1);
@@ -116,9 +115,4 @@ SomewhatScheme::draw_from_distribution(const mpz_class &q_range, const mpz_class
     }
     return p * q + r;
 }
-
-double SomewhatScheme::log2(int x) {
-    return std::log(x) / std::log(2);
-}
-
 
