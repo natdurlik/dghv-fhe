@@ -11,7 +11,6 @@ T circuit(T m1, T m2, T m3) {
     return m1 + m2 * m3;
 }
 
-
 NTL::GF2
 get_squashed_decrypt(FullyScheme &fhe, const mpz_class &c, const SecretKey &secret_key, const PublicKey &public_key) {
     auto [c_star, z] = fhe.post_process(c, public_key.y);
@@ -21,7 +20,8 @@ get_squashed_decrypt(FullyScheme &fhe, const mpz_class &c, const SecretKey &secr
 int main() {
     long seed = time(nullptr);
     cout << "seed = " << seed << endl;
-    FullyScheme fhe(6, 35, 35, seed);
+    FullyScheme fhe(6, seed);
+
     auto [secret_key, public_key] = fhe.key_gen();
 
     auto m0 = NTL::GF2{1};
@@ -31,7 +31,7 @@ int main() {
     auto c1 = fhe.encrypt(public_key, m1);
     auto c2 = fhe.encrypt(public_key, m2);
 
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 5; i++) {
         c0 = circuit(c0, c1, c2);
         m0 = circuit(m0, m1, m2);
         fhe.recrypt(c0, public_key);

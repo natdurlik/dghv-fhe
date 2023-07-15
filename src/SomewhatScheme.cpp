@@ -4,8 +4,8 @@
 
 SomewhatScheme::SomewhatScheme(int security, long rd_seed) : rand(gmp_randinit_default) {
     lambda = security;
-    ro = lambda;
-    ro_prim = 2 * lambda;
+    rho = lambda;
+    rho_prim = 2 * lambda;
     gamma = lambda * lambda * lambda * lambda * lambda;
     eta = lambda * lambda * log2(lambda);
     tau = gamma + lambda;
@@ -13,8 +13,8 @@ SomewhatScheme::SomewhatScheme(int security, long rd_seed) : rand(gmp_randinit_d
     rand.seed(rd_seed);
 }
 
-SomewhatScheme::SomewhatScheme(int lambda, int gamma, int eta, int ro, int ro_prim, int tau, int rd_seed) :
-        lambda(lambda), gamma(gamma), eta(eta), ro(ro), ro_prim(ro_prim), tau(tau), rand(gmp_randinit_default) {
+SomewhatScheme::SomewhatScheme(int lambda, int gamma, int eta, int rho, int rho_prim, int tau, int rd_seed) :
+        lambda(lambda), gamma(gamma), eta(eta), rho(rho), rho_prim(rho_prim), tau(tau), rand(gmp_randinit_default) {
     rand.seed(rd_seed);
 }
 
@@ -48,7 +48,7 @@ Ciphertext SomewhatScheme::encrypt(const PublicKey &public_key, NTL::GF2 message
         }
     }
 
-    mpz_class r_range = pow_of_two(ro_prim);
+    mpz_class r_range = pow_of_two(rho_prim);
     mpz_class r = rand.get_z_range(r_range - 1);
     mpz_class neg = rand.get_z_bits(1);
     if (neg == 1) {
@@ -88,7 +88,7 @@ std::vector<mpz_class> SomewhatScheme::sample_public_key(const mpz_class &p) {
     mpz_class q_range = pow_of_two(gamma);
     q_range /= p;
 
-    mpz_class r_range = pow_of_two(ro);
+    mpz_class r_range = pow_of_two(rho);
 
     std::vector<mpz_class> x(tau + 1);
     x[0] = 2;

@@ -193,7 +193,7 @@ TEST_P(KeysAndCiphertextsRanges, SamplePublicKey) {
     mpz_class p = scheme.sample_secret_key();
     auto x = scheme.sample_public_key(p);
     mpz_class right = pow_of_two(scheme.gamma);
-    mpz_class left = -pow_of_two(scheme.ro);
+    mpz_class left = -pow_of_two(scheme.rho);
 
     EXPECT_EQ(x.size(), scheme.tau + 1);
     for (const auto &i: x) {

@@ -19,8 +19,6 @@ public:
     friend Ciphertext operator+(Ciphertext lhs, const Ciphertext &rhs);
 
     friend Ciphertext operator*(Ciphertext lhs, const Ciphertext &rhs);
-
-    void reduce();
 };
 
 #endif //DGHV_FHE_CIPHERTEXT_H

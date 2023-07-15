@@ -80,7 +80,7 @@ TEST(PowOfTwo, SimpleChecks) {
 
 TEST(Mod2f, SimpleChecks) {
     int prec = 100;
-    mpf_class err(0.00001, prec); // fixme?
+    mpf_class err(0.00001, prec);
 
     mpf_class x(123, prec);
     mpf_class res(1, prec);
@@ -101,7 +101,7 @@ TEST(Mod2f, SimpleChecks) {
 
 TEST(Mod2f, NegativeValues) {
     int prec = 100;
-    mpf_class err(0.00001, prec); // fixme?
+    mpf_class err(0.00001, prec);
 
     mpf_class x(-1.123, prec);
     mpf_class res(2, prec);
@@ -167,12 +167,6 @@ TEST(MpfToBits, ThrowsWhenGreaterOrEqualTwo) {
     f = 2;
     EXPECT_THROW(mpf_to_bits(f, n), std::logic_error);
 }
-
-//TEST(MpfToBits, CornerCase) {
-//    mpf_class x("1.99999", 6, 10);
-//    mp_exp_t exp;
-//    std::string bits_str = x.get_str(exp, 2, 6 + 6);
-//}
 
 TEST(MpzToBits, SimpleChecks) {
     mpz_class x = 1;

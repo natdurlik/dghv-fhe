@@ -14,14 +14,14 @@ public:
     int lambda;
     int gamma;
     int eta;
-    int ro;
-    int ro_prim;
+    int rho;
+    int rho_prim;
     int tau;
     gmp_randclass rand;
 
     SomewhatScheme(int security, long rd_seed);
 
-    SomewhatScheme(int lambda, int gamma, int eta, int ro, int ro_prim, int tau, int rd_seed);
+    SomewhatScheme(int lambda, int gamma, int eta, int rho, int rho_prim, int tau, int rd_seed);
 
     std::pair<mpz_class, PublicKey> key_gen();
 

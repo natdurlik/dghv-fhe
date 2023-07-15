@@ -5,8 +5,12 @@ FullyScheme::FullyScheme(int security, long rd_seed) : SomewhatScheme(security, 
     theta = lambda;
     kappa = gamma + 2;
     Theta = kappa * log2(lambda);
-    eta *= Theta;
     n = std::ceil(log2(theta)) + 3;
+}
+
+FullyScheme::FullyScheme(int security, int Theta, long rd_seed) : FullyScheme(security, rd_seed) {
+    this->Theta = Theta;
+    eta = lambda * lambda * Theta;
 }
 
 FullyScheme::FullyScheme(int security, int Theta, int tau, long rd_seed) : FullyScheme(security, rd_seed) {
@@ -58,7 +62,7 @@ FullyScheme::encrypt_secret_key_bits(const std::vector<NTL::GF2> &s, const mpz_c
     mpz_class q_range = pow_of_two(gamma);
     q_range /= p;
 
-    mpz_class r_range = pow_of_two(ro);
+    mpz_class r_range = pow_of_two(rho);
 
     for (int i = 0; i < encrypted_s.size(); i++) {
         mpz_class m = 0;
